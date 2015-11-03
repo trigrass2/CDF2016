@@ -35,6 +35,8 @@ class GeneralSerialCom():
     def read(self):
         return self.com.read()
 
+    def close(self):
+        self.com.close()
 
 def find_ports():
     """Lists serial ports
@@ -53,7 +55,6 @@ def find_ports():
         ports = glob.glob('/dev/tty.*')
     else:
         raise EnvironmentError('Unsupported platform')
-    
     result = []
     for portID in ports:
         try:
@@ -65,6 +66,11 @@ def find_ports():
         
     return result
 
+def test_port(possible_ports, specific_test_request, specific_test_answer):
+    # TODO : ouvrir chaque connexion série possible, lui envoyer specific_test_request
+    #  verifier si elle renvoie specific_test_answer
+    return 0
+
 class HokuyoCom(GeneralSerialCom):
 
     undesirables_limits = [20, 4100]
@@ -73,13 +79,25 @@ class HokuyoCom(GeneralSerialCom):
         GeneralSerialCom.__init__(self, port, specific_test_request, specific_test_answer)
 
     def get_fresh_data(self):
+        '''
+        # See page 10/25 of URG_SCIP20.pdf
+        self.write('M') # Start of an aquisition command
+        self.write('S') # Specify encoding : 2 character encoded data
+        self.write('0044') # Specify Starting Step
+        self.write('0725') # Specify End Step
+        self.write('01') # Specify Cluster Count
+        self.write('0') # Scan interval
+        self.write('01') # Number of scans
+
+        '''
         start = 44
         end = 725
         # Returns [arraylist of millimeters,arraylist of corresponding rads]
         self.write('M')
         self.write('S')
-        s = [chr(0x30+start/1000), chr(0x30+(start/100) % 10), chr(0x30+(start/10) % 10), chr(0x30+start % 10)]
-        e = [chr(0x30+(end/1000)), chr(0x30+(end/100) % 10), chr(0x30+(end/10) % 10), chr(0x30+end % 10)]
+
+        s = [chr(0x30+start/1000), chr(0x30+((start/100) % 10)), chr(0x30+((start/10) % 10)), chr(0x30+ (start % 10))]
+        e = [chr(0x30+(end/1000)), chr(0x30+((end/100) % 10)), chr(0x30+((end/10) % 10)), chr(0x30 + (end % 10) )]
        
         cluster = 1
         cc = [chr(0x30 + ((cluster / 10) % 10)), chr(0x30 + (cluster % 10))]
@@ -91,42 +109,47 @@ class HokuyoCom(GeneralSerialCom):
         self.write(''.join(b for b in si))
         self.write(''.join(b for b in sn))
         self.write(''.join(b for b in LF))
+
+
         sleep(0.250)
         ret = []
         mes_count = 0
         count = 0
-        possible_end = False    
+        possible_end = False
+
         while self.com.inWaiting() > 0:
-            c1 = self.com.read()
+            c1 = self.com.read() # Read first char
             count += 1
             if not possible_end or c1 != LF:
-                c2 = self.com.read()
+                c2 = self.com.read() # read second char
                 count += 1
+                # Skip the echo send by the Hokuyo
                 if c1 == 'M' and c2 == 'S':
-                    # print 'MS SPOTTED : some nexts avoided'
                     for k in range(47):
                         self.com.read()
-                    # print 'End of avoidance'
+                # Get data from respond
                 elif c1 != '?' and c2 != LF:
                     mes_count += 1
                     data = ((ord(c1) - 0x30) << 6) | (ord(c2) - 0x30)
-                    # print 'Mesure', mes_count, 'is', data
                     ret.append(data)
+                # Detect end of message
                 else:
-                    # print 'End of block detected at :', count, 'bytes'
                     count = 0
                     possible_end = True
+
             else:
                 possible_end = False
+
         n = len(ret)
+        # Create the Angle tab
         doub = [-k*4*pi/3/n + 2*pi/3 for k in range(n)]
         return [ret, doub]
 
-    def clear_data(self, ret, doub):
+    def clean_data(self, ret, doub):
         range_cleaned = []
         angle_cleaned = []
         for k in range(len(ret)):
-            if ret[k] < HokuyoCom.undesirables_limits[0] or ret[k]>HokuyoCom.undesirables_limits[1]:
+            if not (ret[k] < HokuyoCom.undesirables_limits[0] or ret[k]>HokuyoCom.undesirables_limits[1]):
                 range_cleaned.append(ret[k])
                 angle_cleaned.append(doub[k])
         return [range_cleaned, angle_cleaned]
