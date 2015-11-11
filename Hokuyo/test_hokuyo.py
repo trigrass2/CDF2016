@@ -31,6 +31,17 @@ while not done:
     # Display data
     graph.displayCart(X, Y)
 
+    # Save data, Skip data, Quit
+    layout = raw_input('Enter layout name (or \'quit\' to quit):')
+    if(layout == 'quit'): # Quit
+        done = True
+    elif(layout != ''):
+        f = open('mapping.txt', 'a')
+        f.write('Layout: ' + layout + '\n')
+        f.write(str(X) + '\n')
+        f.write(str(Y) + '\n')
+        f.close()
+
 
 graph.quit()
 lidar.close()
