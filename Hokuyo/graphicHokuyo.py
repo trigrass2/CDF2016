@@ -1,14 +1,14 @@
 __author__ = 'adrie_000'
 
+import pygame
 from time import sleep
 from SerialCom import HokuyoCom, find_ports
 from math import ceil
+
 ports = find_ports()
 print(ports)
-com = HokuyoCom(ports[0])
+com = HokuyoCom('ttyACM0')
 sleep(0.2)
-
-import pygame
 
 black = [0, 0, 0]
 white = [255, 255, 255]
