@@ -10,7 +10,6 @@ def isIn(board, pos):
     intersect = 0
     boardLen = len(board)
     for k in range(boardLen):
-        print(k)
         if((board[k][1] < pos[1] and board[(k+1)%boardLen][1] >= pos[1]) or
            (board[k][1] > pos[1] and board[(k+1)%boardLen][1] <= pos[1])):
             if((pos[0]-board[k][0]) > (pos[1]-board[k][1])*(board[(k+1)%boardLen][0]-board[k][0])/(board[(k+1)%boardLen][1]-board[k][1])):
@@ -48,12 +47,12 @@ def extend(board, padding):
         if(board[k][0] < bar[0]):
             x = board[k][0] - padding
         else:
-            x = board[k][0] - padding
+            x = board[k][0] + padding
         # If the corner is on the left of the barycentre subtract, else add.
         if(board[k][1] < bar[1]):
             y = board[k][1] - padding
         else:
-            y = board[k][1] - padding
+            y = board[k][1] + padding
         # Add the extended corner to the board
         ex_board.append([x, y])
 
@@ -66,5 +65,10 @@ def barycentre(board):
         bar = [bar[0]+board[k][0], bar[1]+board[k][1]]
     bar = [bar[0]/len(board), bar[1]/len(board)]
     return bar
+
+def polar2cartesian(ranging, angle):
+    x = ranging * np.cos(angle)
+    y = ranging * np.sin(angle)
+    return [x,y]
 
 # End of Tools.py

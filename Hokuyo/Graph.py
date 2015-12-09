@@ -28,6 +28,13 @@ class Graph():
         else:
             for k in range(len(X)):
                 pygame.draw.circle(self.screen, self.dotColor, [int(X[k]*self.scale+self.size[0]/2), int(Y[k]*self.scale+self.size[1]/2)], 1)
+
+
+    def displayObstacles(self, obstacles, color, size):
+        for k in range(len(obstacles)):
+                pygame.draw.circle(self.screen, color, [int(obstacles[k].center[0]*self.scale+self.size[0]/2), int(obstacles[k].center[1]*self.scale+self.size[1]/2)], size)
+
+    def show(self):
         pygame.display.flip()
         self.clock.tick(60)
 

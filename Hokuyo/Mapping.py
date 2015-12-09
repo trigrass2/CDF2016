@@ -5,11 +5,84 @@ import numpy as np
 
 import Tools
 
-class Mapping(Thread):
+def find_obstacles(data):
+    # Find the distance between each consecutive points.
+    d_x = data[0][1:] - data[0][:-1]
+    d_y = data[1][1:] - data[1][:-1]
 
-    THRESH_DETECTION = 0.1
+    # Calcul de la distance
+    ranges = [np.linalg.norm([d_x[k], d_y[k]]) for k in range(len(d_x))]
+
+    # Creation of the first obstacle
+    if(len(data[0]) != 0):
+        obstacles = [Obstacle()]
+        obstacles[-1].append([data[0][0], data[1][0]])
+
+    # Process every points
+    for k in range(len(ranges)):
+        # If the point is to far away from the current obstacle, create a new one.
+        if (ranges[k] > Mapping.THRESH_DETECTION or ranges[k] < -Mapping.THRESH_DETECTION):
+            obstacles.append(Obstacle())
+        # Add current point to the last known obstacle
+        obstacles[-1].append(item=[data[0][k + 1], data[1][k + 1]])
+
+    # Find the data for the obstacles given their points.
+    for obstacle in obstacles:
+        obstacle.reduce()
+
+    # Return the tab of obstacles.
+    return obstacles
+
+def getRobPos(distance, coordinate):
+    # Distance entre les deux bases
+    a = np.sqrt((coordinate[0][0]-coordinate[1][0])**2+(coordinate[0][1]-coordinate[1][1])**2)
+
+    # Hauteur en M du triangle forme par M et les deux bases
+    h = 1/ (2*a) * np.sqrt((a+distance[0]+distance[1])*(-a+distance[0]+distance[1])*(a-distance[0]+distance[1])*(a+distance[0]-distance[1]))
+
+    # Distance entre la premiere base et H (intersection hauteur et axe des deux bases)
+    d0 = np.sqrt(distance[0]**2 - h**2)
+
+    # Vecteur directeur
+    ABsurAB = np.array([coordinate[1][0]-coordinate[0][0],coordinate[1][1]-coordinate[0][1]])/np.sqrt((coordinate[1][0]-coordinate[0][0])**2 + (coordinate[1][1]-coordinate[0][1])**2)
+    n = np.array([-ABsurAB[1], ABsurAB[0]])
+
+    print(ABsurAB)
+    print(n)
+
+    # M position du robot
+    M = np.array(coordinate[0]) + d0 * ABsurAB + h * n
+
+    return M
+
+def filter_obstacles(raw_obstacles, board, bot_pos, bot_orien):
+    # Initialize the tab of obstacle
+    obstacles = []
+
+    # Expend the board to compensate for deplacement of the robot
+    extended_board = Tools.extend(board, 300)
+
+    # Move the board so that the robot coordinate are (0,0)
+    extended_board = Tools.shift_relative(extended_board, bot_pos)
+
+    # Rotate the board depending of the last orientation of the robot
+    # -bot_orien is because we want to rotate the board relative to the robot
+    extended_board = Tools.rotate(extended_board, -bot_orien)
+
+    # Filter obstacles
+    for k in range(len(raw_obstacles)):
+        # Only keep the obstacle if it is in the board
+        if(Tools.isIn(extended_board, raw_obstacles[k].center)):
+            obstacles.append(raw_obstacles[k])
+
+    # Return filtered obstacles
+    return obstacles
+
+class Mapping():
+
+    THRESH_DETECTION = 500
     BOARD = [[0,0], [0,5], [10,5], [10,0]]
-
+    '''
     def __init__(self, hokuyo_com, data_center):
         Thread.__init__(self)
         self.hokuyo = hokuyo_com
@@ -18,7 +91,7 @@ class Mapping(Thread):
         self.data = None
         self.bot_pos = None
         self.bot_orient = None
-
+    '''
     def stop(self):
         self.started = False
 
@@ -37,33 +110,9 @@ class Mapping(Thread):
             # Remove obstacle outside the board
             self.obstacles = self.filter_obstacles(raw_obstacles, Mapping.BOARD, self.bot_pos[-1], self.bot_orient[-1])
 
+            self.beacon = self.find_beacon(self.obstacles)
 
-    def find_positions_in_data(self):
 
-        # Find the distance between each consecutive points.
-        d_x = np.array(self.data[0][1:]) - np.array(self.data[0][:-1])
-        d_y = np.array(self.data[1][1:]) - np.array(self.data[1][:-1])
-        ranges = [np.linalg.norm([d_x[k], d_y[k]]) for k in range(len(d_x))]  # Calcul de la distance
-
-        # Creation of the first obstacle
-        if(len(self.data[0]) != 0):
-            obstacles = [Obstacle()]
-            obstacles[-1].append([self.data[0][0], self.data[1][0]])
-
-        # Process every points
-        for k in range(len(ranges)):
-            # If the point is to far away from the current obstacle, create a new one.
-            if ranges[k] > Mapping.THRESH_DETECTION:
-                obstacles.append(Obstacle())
-            # Add current point to the last known obstacle
-            obstacles[-1].append(item=[self.data[0][k + 1], self.data[1][k + 1]])
-
-        # Find the data for the obstacles given their points.
-        for obstacle in obstacles:
-            obstacle.reduce()
-
-        # Return the tab of obstacles.
-        return obstacles
 
     def filter_obstacles(raw_obstacles, board, bot_pos, bot_orien):
         # Initialize the tab of obstacle
@@ -102,7 +151,7 @@ class Obstacle():
         self.pointList.append(item)
 
     def reduce(self):
-        # En gros, calcul du barycentre, et définition du type en fonction du rapport (distmin/distmax)
+        # En gros, calcul du barycentre, et definition du type en fonction du rapport (distmin/distmax)
         # distX = distX au barycentre
         self.pointList = np.matrixlib.matrix([[self.pointList[k][0] for k in range(len(self.pointList))],
                                               [self.pointList[k][1] for k in range(len(self.pointList))]])
