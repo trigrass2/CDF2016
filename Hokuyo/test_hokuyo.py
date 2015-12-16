@@ -47,7 +47,7 @@ while not done:
     graph.displayObstacles(raw_obstacles, [0,0,255], 3)
     graph.displayObstacles(obstacles, [0,255,255], 5)
 
-    test = Mapping.getRobPos([np.linalg.norm(obstacles[0].center), np.linalg.norm(obstacles[1].center)], [[2000, 3000], [00, 3000]])
+    test = Mapping.getRobPos([np.linalg.norm(obstacles[1].center), np.linalg.norm(obstacles[2].center)], [[2000, 3000], [00, 3000]])
     print(test)
 
     graph.show()
