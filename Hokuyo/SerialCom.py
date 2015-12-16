@@ -5,6 +5,7 @@ from math import pi, cos, sin
 from time import sleep
 from threading import Thread
 import glob
+import numpy
 
 from serial import *
 
@@ -154,10 +155,3 @@ class HokuyoCom(GeneralSerialCom):
                 angle_cleaned.append(doub[k])
         return [range_cleaned, angle_cleaned]
 
-    def polar2cartesian(self, ranging, angle):
-        x = []
-        y = []
-        for k in range(len(ranging)):
-            x.append(ranging[k]*cos(angle[k]))
-            y.append(ranging[k]*sin(angle[k]))
-        return [x,y]
