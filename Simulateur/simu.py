@@ -20,7 +20,7 @@ class PosWheels():
 		self.r2 = (posx + self.lx - dimx, posy + self.ly / 2)
 
 		self.head = (posx + self.lx / 2 - dimy / 2, posy)
-#
+#se
 
 def main():
 	continuer = 1
