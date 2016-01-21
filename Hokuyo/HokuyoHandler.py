@@ -1,3 +1,5 @@
+# OBSOLETE #
+
 # -*- coding: utf8 -*-
 __author__ = 'adrie_000'
 

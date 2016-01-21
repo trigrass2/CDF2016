@@ -10,13 +10,6 @@ import numpy
 from serial import *
 
 
-LEFT = 0
-RIGHT = 1
-MOTOR = 0
-HOKUYO = 1
-codes = ['0', '1']
-
-
 class GeneralSerialCom():
     def __init__(self, port=None, specific_test_request=None, specific_test_answer=None):
         self.port = port
@@ -40,22 +33,24 @@ class GeneralSerialCom():
         self.com.close()
 
 def find_ports():
-    """Lists serial ports
+    """ Lists serial ports
     :raises EnvironmentError:
         On unsupported or unknown platforms
     :returns:
         A list of available serial ports
     """
+
     if sys.platform.startswith('win'):
         ports = ['COM' + str(i + 1) for i in range(256)]
     elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
         # this is to exclude your current terminal "/dev/tty"
-        print("Linux ports search")
         ports = glob.glob('/dev/tty[A-Za-z]*')
     elif sys.platform.startswith('darwin'):
         ports = glob.glob('/dev/tty.*')
     else:
         raise EnvironmentError('Unsupported platform')
+
+    # Try opening ports to find used ones.
     result = []
     for portID in ports:
         try:
@@ -68,8 +63,7 @@ def find_ports():
     return result
 
 def test_port(possible_ports, specific_test_request, specific_test_answer):
-    # TODO : ouvrir chaque connexion série possible, lui envoyer specific_test_request
-    #  verifier si elle renvoie specific_test_answer
+    # TODO : ouvrir chaque connexion série possible, lui envoyer specific_test_request, verifier si elle renvoie specific_test_answer
     return 0
 
 class HokuyoCom(GeneralSerialCom):
@@ -79,18 +73,14 @@ class HokuyoCom(GeneralSerialCom):
     def __init__(self, port=None, specific_test_request=None, specific_test_answer=None):
         GeneralSerialCom.__init__(self, port, specific_test_request, specific_test_answer)
 
-    def get_fresh_data(self):
-        '''
-        # See page 10/25 of URG_SCIP20.pdf
-        self.write('M') # Start of an aquisition command
-        self.write('S') # Specify encoding : 2 character encoded data
-        self.write('0044') # Specify Starting Step
-        self.write('0725') # Specify End Step
-        self.write('01') # Specify Cluster Count
-        self.write('0') # Scan interval
-        self.write('01') # Number of scans
 
-        '''
+    def get_fresh_data(self):
+        """ Return new data from the Hokuyo
+        :return: [range, angle]
+            range = [int, int, int, ...]
+            angle = [double, double, double, ...]
+        """
+
         start = 44
         end = 725
         # Returns [arraylist of millimeters,arraylist of corresponding rads]
@@ -111,7 +101,6 @@ class HokuyoCom(GeneralSerialCom):
         self.write(''.join(b for b in sn))
         self.write(''.join(b for b in LF))
 
-
         sleep(0.250)
         ret = []
         mes_count = 0
@@ -119,10 +108,10 @@ class HokuyoCom(GeneralSerialCom):
         possible_end = False
 
         while self.com.inWaiting() > 0:
-            c1 = self.com.read() # Read first char
+            c1 = self.com.read()                         # Read first char
             count += 1
             if not possible_end or c1 != LF:
-                c2 = self.com.read() # read second char
+                c2 = self.com.read()                     # Read second char
                 count += 1
                 # Skip the echo send by the Hokuyo
                 if c1 == 'M' and c2 == 'S':
@@ -146,7 +135,13 @@ class HokuyoCom(GeneralSerialCom):
         doub = [-k*4*pi/3/n + 2*pi/3 for k in range(n)]
         return [ret, doub]
 
+
     def clean_data(self, ret, doub):
+        """ Supprime les valeurs abérentes
+        :param ret: [int, int, int, ...]
+        :param doub: [double, double, double, ...]
+        :return: [range, angle], range = [int, int, int, ...], angle = [double, double, double, ...]
+        """
         range_cleaned = []
         angle_cleaned = []
         for k in range(len(ret)):

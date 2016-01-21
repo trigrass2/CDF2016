@@ -1,3 +1,5 @@
+# OBSOLETE #
+
 __author__ = 'adrie_000'
 
 import pygame

@@ -1,3 +1,5 @@
+# OBSOLETE #
+
 __author__ = 'anthony'
 
 from time import sleep
