@@ -68,8 +68,6 @@ def test_port(possible_ports, specific_test_request, specific_test_answer):
 
 class HokuyoCom(GeneralSerialCom):
 
-    undesirables_limits = [20, 4100]
-
     def __init__(self, port=None, specific_test_request=None, specific_test_answer=None):
         GeneralSerialCom.__init__(self, port, specific_test_request, specific_test_answer)
 
@@ -134,19 +132,3 @@ class HokuyoCom(GeneralSerialCom):
         # Create the Angle tab
         doub = [-k*4*pi/3/n + 2*pi/3 for k in range(n)]
         return [ret, doub]
-
-
-    def clean_data(self, ret, doub):
-        """ Supprime les valeurs abérentes
-        :param ret: [int, int, int, ...]
-        :param doub: [double, double, double, ...]
-        :return: [range, angle], range = [int, int, int, ...], angle = [double, double, double, ...]
-        """
-        range_cleaned = []
-        angle_cleaned = []
-        for k in range(len(ret)):
-            if not (ret[k] < HokuyoCom.undesirables_limits[0] or ret[k]>HokuyoCom.undesirables_limits[1]):
-                range_cleaned.append(ret[k])
-                angle_cleaned.append(doub[k])
-        return [range_cleaned, angle_cleaned]
-

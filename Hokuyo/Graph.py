@@ -7,6 +7,8 @@ import Tools
 class Graph():
     pygame.init()
 
+    ROBOT_SHAPE = numpy.array([[-100, -100], [100, -100], [0, 100]])
+
     def __init__(self, size = [409, 409], scale = 1/20.0, backgroundColor = [0,0,0], dotColor=[0,255,0]):
         """
         :param size: Window size
@@ -58,8 +60,8 @@ class Graph():
         """
 
         for k in range(len(points)):
-            x = int((points[k][0]-200)*self.scale+self.size[0]/2)
-            y = int(-(points[k][1]-1100)*self.scale+self.size[1]/2)
+            x = int((points[k][0]-1000)*self.scale+self.size[0]/2)
+            y = int(-(points[k][1]-1500)*self.scale+self.size[1]/2)
             if x < self.size[0] and y < self.size[1] and x >= 0 and y >= 0:
                 pygame.draw.circle(self.screen, color, [x, y], size, width)
 
@@ -68,10 +70,9 @@ class Graph():
         :param map: Map() object to be displayed
         """
         # Display point cloud
-        points = Tools.rotate(numpy.transpose(map.cloud), -map.bot_ori[-1])
-        points = Tools.shift_relative(points, map.bot_pos[-1])
+        points = Tools.rotate(map.cloud, -map.bot_ori[-1])
+        points = Tools.translate(points, map.bot_pos[-1])
         self.displayCloud(points, [0, 255, 0], 1, 0)
-        print(points)
 
         #Display beacon
         b = map.BEACON[:]
@@ -79,16 +80,19 @@ class Graph():
         #self.displayCloud(Tools.rotate(map.detect+map.bot_pos[-1], -map.bot_ori[-1]), [100,100,100], 15, 2)
 
         #Display robot
-        bot = [[map.bot_pos[-1][0], map.bot_pos[-1][1]]]
-        self.displayCloud(bot, [0,0,255], 5, 0)
+
+        bot = Tools.rotate(self.ROBOT_SHAPE, map.bot_ori[-1]) + numpy.array([map.bot_pos[-1][0], map.bot_pos[-1][1]])
+        sceen_rob = ((bot-[1000, 1500])*self.scale)*numpy.array([1, -1])+numpy.array(self.size)/2
+
+        pygame.draw.polygon(self.screen, [0, 0, 255], sceen_rob.astype(int), 2)
 
         #Display obstacles
         obs = [map.obstacles[i].center for i in range(len(map.obstacles))]
         obs = Tools.rotate(obs,  -map.bot_ori[-1])
-        obs = Tools.shift_relative(obs, map.bot_pos[-1])
-        self.displayCloud(obs, [0,255,255], 3, 0)
+        obs = Tools.translate(obs, map.bot_pos[-1])
+        self.displayCloud(obs, [0, 255, 255], 3, 0)
 
-    def show(self, filename = 0):
+    def show(self, filename=0):
         """ Update the display
         :param filename: Name of the file used to save the graph
         """

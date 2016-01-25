@@ -55,7 +55,7 @@ def getHokuyoData(botPos, botAngle, obstacles):
                         M = obstacle[i-1] + (obstacle[i]-obstacle[i-1])*e/d
                         vecteur = M-botPos
                         direction = np.arctan2(vecteur[1], vecteur[0])
-                        if np.linalg.norm(vecteur) < D and abs((theta+botAngle+np.pi/2)%(np.pi*2) - direction)%(2*np.pi) < np.pi:
+                        if np.linalg.norm(vecteur) < D and np.cos(theta+botAngle+np.pi/2 - direction) > 0.5:
                             D = np.linalg.norm(M-botPos)
 
         #Save distance
@@ -63,22 +63,21 @@ def getHokuyoData(botPos, botAngle, obstacles):
             result.append([theta, D])
         theta = theta + dtheta
 
-    return result
+    if not result:
+        result = [[0, 0]]
+
+    return np.array(result).transpose()
 
 import Tools, Graph, time
 if __name__ == "__main__":
-    balise = np.array([[-40,-40], [40,-40], [40,40], [-40,40]])
-    beacon = [np.array([0,0])+balise, np.array([2000,0])+balise, np.array([2000, 3000])+balise, np.array([0, 3000])+balise]
+    balise = np.array([[-40, -40], [40, -40], [40, 40], [-40, 40]])
+    beacon = [np.array([0, 0])+balise, np.array([2000, 0])+balise, np.array([2000, 3000])+balise, np.array([0, 3000])+balise]
 
     for i in range(200, 2500, 100):
 
-        R = getHokuyoData(np.array([1000,i]), i/2500.0*2,beacon)
-        if not R:
-            R = [[0,0]]
+        R = getHokuyoData(np.array([1000, 200]), i/50*np.pi/180, beacon)
 
-        R = np.transpose(R)
-
-        R = Tools.polar2cartesian(R[0], R[1])
+        R = Tools.polar2cartesian(R)
         gr = Graph.Graph()
-        gr.displayCart(R[0], R[1])
+        gr.displayCloud(R, [0, 255, 0], 2, 0)
         gr.show()
