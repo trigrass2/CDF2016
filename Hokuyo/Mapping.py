@@ -5,26 +5,36 @@ import numpy as np
 
 import Tools
 
-def find_obstacles(data):
+
+def find_obstacles(data): # TODO: Modifier data to [coord, coord, coord, ...], coord=[int, int]
+    """ Return a list of Obstacle given a cloud of point.
+    :param data: List of points
+        [X, Y], X = [int, int, int, ...], Y = [int, int, int, ...]
+    :return obstacles:
+        [Obstacle(), Obstacle(), Obstacle(), ...]
+    """
+
     # Find the distance between each consecutive points.
-    d_x = data[0][1:] - data[0][:-1]
-    d_y = data[1][1:] - data[1][:-1]
+    d_x = [data[k][0] - data[k-1][0] for k in range(len(data))]
+    d_y = [data[k][1] - data[k-1][1] for k in range(len(data))]
 
     # Calcul de la distance
     ranges = [np.linalg.norm([d_x[k], d_y[k]]) for k in range(len(d_x))]
 
     # Creation of the first obstacle
-    if(len(data[0]) != 0):
+    if(len(data) != 0):
         obstacles = [Obstacle()]
-        obstacles[-1].append([data[0][0], data[1][0]])
+        obstacles[-1].append([data[-1][0], data[-1][1]])
 
     # Process every points
     for k in range(len(ranges)):
+
         # If the point is to far away from the current obstacle, create a new one.
-        if (ranges[k] > Map.THRESH_DETECTION or ranges[k] < -Map.THRESH_DETECTION):
+        if abs(ranges[k]) > Map.THRESH_DETECTION: # or ranges[k] < -Map.THRESH_DETECTION:  # TODO: Vérifier que la modification est valable
             obstacles.append(Obstacle())
+
         # Add current point to the last known obstacle
-        obstacles[-1].append(item=[data[0][k + 1], data[1][k + 1]])
+        obstacles[-1].append(item=data[k])
 
     # Find the data for the obstacles given their points.
     for obstacle in obstacles:
@@ -33,59 +43,110 @@ def find_obstacles(data):
     # Return the tab of obstacles.
     return obstacles
 
+
+def filter_obstacles(raw_obstacles, board, bot_pos, bot_orien):
+    """ Return the list of filtered Obstacle using an approximate state of the robot.
+    :param raw_obstacles: [Obstacle(), Obstacle(), Obstacle(), ...]
+    :param board: [coord, coord, coord, ...], coord = [int, int]
+    :param bot_pos: [int, int]
+    :param bot_orien: double
+    :return: [Obstacle(), Obstacle(), Obstacle(), ...]
+    """
+
+    # Initialize the tab of obstacle
+    obstacles = []
+
+    # Expend the board to compensate for displacement of the robot
+    expended_board = Tools.expend(board, 300)
+
+    # Move the board so that the robot coordinate are (0,0)
+    expended_board = Tools.translate(expended_board, -bot_pos)
+
+    # Rotate the board depending of the last orientation of the robot
+    expended_board = Tools.rotate(expended_board, bot_orien)
+
+    # Filter obstacles
+    for k in range(len(raw_obstacles)):
+        # Only keep the obstacle if it is in the board
+        if Tools.isIn(raw_obstacles[k].center, expended_board):
+            obstacles.append(raw_obstacles[k])
+
+    # Return filtered obstacles
+    return obstacles
+
+
+def find_beacon(obstacles, beacons):
+        """ Identify which obstacles are beacon. Return the number of the beacon and the coordinate relative to the robot.
+        :param obstacles: [Obstacle(), Obstacle(), Obstacle(), ...]
+        :param beacons: Approximate position of the beacons
+            [coord, coord, coord, ...], coord = [int, int]
+        :return: [beacon, beacon, ...], beacon = [i, [x, y]]
+        """
+        nBeacon = 0
+        beacon = []
+        for i in range(len(beacons)):
+            min = 250
+            tmp = 0
+            for obstacle in obstacles:
+                if np.linalg.norm(obstacle.center - beacons[i]) < min:
+                    min = np.linalg.norm(obstacle.center - beacons[i])
+                    tmp = obstacle
+            if tmp != 0:
+                beacon.append([i, tmp.center])
+                nBeacon = nBeacon + 1
+
+        if nBeacon < 2:
+            print("Error: Beacon not found!")
+            beacon = 0
+        return beacon
+
+
 def getRobPos(distance, coordinate):
+    """ Return the coordinate of the Robot given the distance with the beacons and their coordinate.
+    :param distance:
+        [int, int, int, ...]
+    :param coordinate:
+        [coord, coord, coord, ...], coord = [int, int]
+    :return:
+        [int, int]
+    """
+
+    distance = np.array(distance)+40
     # Distance entre les deux bases
     a = np.sqrt((coordinate[0][0]-coordinate[1][0])**2+(coordinate[0][1]-coordinate[1][1])**2)
 
     # Hauteur en M du triangle forme par M et les deux bases
-    h = 1/ (2*a) * np.sqrt((a+distance[0]+distance[1])*(-a+distance[0]+distance[1])*(a-distance[0]+distance[1])*(a+distance[0]-distance[1]))
+    h = 1/ (2*a) *\
+        np.sqrt((a+distance[0]+distance[1])*(-a+distance[0]+distance[1]) *
+                (a-distance[0]+distance[1])*(a+distance[0]-distance[1]))
 
     # Distance entre la premiere base et H (intersection hauteur et axe des deux bases)
     d0 = np.sqrt(distance[0]**2 - h**2)
 
     # Vecteur directeur
-    ABsurAB = np.array([coordinate[1][0]-coordinate[0][0],coordinate[1][1]-coordinate[0][1]])/np.sqrt((coordinate[1][0]-coordinate[0][0])**2 + (coordinate[1][1]-coordinate[0][1])**2)
-    n = np.array([ABsurAB[1], -ABsurAB[0]])
+    ABsurAB = np.array([coordinate[1][0]-coordinate[0][0], coordinate[1][1]-coordinate[0][1]])\
+            /np.sqrt((coordinate[1][0]-coordinate[0][0])**2 + (coordinate[1][1]-coordinate[0][1])**2)
+    n = np.array([-ABsurAB[1], ABsurAB[0]])
 
     # M position du robot
     M = np.array(coordinate[0]) + d0 * ABsurAB + h * n
 
     return M
 
-def filter_obstacles(raw_obstacles, board, bot_pos, bot_orien):
-    # Initialize the tab of obstacle
-    obstacles = []
-
-    # Expend the board to compensate for deplacement of the robot
-    extended_board = Tools.extend(board, 300)
-
-    # Move the board so that the robot coordinate are (0,0)
-    extended_board = Tools.shift_relative(extended_board, bot_pos)
-
-    # Rotate the board depending of the last orientation of the robot
-    # -bot_orien is because we want to rotate the board relative to the robot
-    extended_board = Tools.rotate(extended_board, -bot_orien)
-
-    # Filter obstacles
-    for k in range(len(raw_obstacles)):
-        # Only keep the obstacle if it is in the board
-        if(Tools.isIn(extended_board, raw_obstacles[k].center)):
-            obstacles.append(raw_obstacles[k])
-
-    # Return filtered obstacles
-    return obstacles
-
 class Map:
+
     THRESH_DETECTION = 100
-    BOARD = np.array([[0,0], [2000,0], [2000, -3000], [0, -3000]])
-    BEACON = np.array([[0,0], [2000,0], [2000, -3000], [0, -3000]])
+    BOARD = np.array([[0, 0], [2000, 0], [2000, 3000], [0, 3000]])
+    BEACON = np.array([[0, 0], [2000, 0], [2000, 3000], [0, 3000]])
 
     def __init__(self, startPos):
         self.N = 0
-        self.bot_pos = [startPos]
+        self.bot_pos = [np.array(startPos)]
         self.bot_ori = [0]
-        self.beacon = np.array([[0,0], [2000,0], [2000, -3000], [0, -3000]]) - startPos
+        self.beacon = np.array([[0,0], [2000,0], [2000, 3000], [0, 3000]]) - startPos
         self.cloud = 0
+        self.obstacles = []
+        self.detect = []
 
     def getData(self):
         # Get new data from Hokuyo
@@ -138,6 +199,9 @@ class Map:
         return data
 
     def update(self, cloudMap):
+        """ Update the map to the next state.
+        :param cloudMap: Points list
+        """
         self.cloud = cloudMap
 
         # Find obstacles
@@ -146,102 +210,19 @@ class Map:
         # Remove obstacle outside the board
         self.obstacles = filter_obstacles(rawObstacles, Map.BOARD, self.bot_pos[-1], self.bot_ori[-1])
 
-        beacon = self.find_beacon(self.obstacles)
+        beacon = find_beacon(self.obstacles, self.beacon)
 
         if beacon != 0:
-            pos = getRobPos([beacon[0][1],beacon[1][1]], [Map.BEACON[beacon[0][0]], Map.BEACON[beacon[1][0]]])
-            print(pos)
-            self.beacon = np.array([[0,0], [2000,0], [2000, -3000], [0, -3000]]) - pos
-            self.bot_pos.append(pos)
+            pos = getRobPos([np.linalg.norm(beacon[0][1]),np.linalg.norm(beacon[1][1])], [Map.BEACON[beacon[0][0]], Map.BEACON[beacon[1][0]]])
+            vecBeac = Map.BEACON[beacon[0][0]]-pos # Vecteur pointant vers la balise
+            ori0 = np.arctan2(vecBeac[1], vecBeac[0]) # Cap de la balise si ori=0
+            oriR = np.arctan2(beacon[0][1][1], beacon[0][1][0]) # Cap de la balise
+            ori = oriR - ori0 + 2*np.pi/180.0
 
-    def find_beacon(self, obstacles):
-        nBeacon = 0
-        beacon=[]
-        for i in range(len(self.beacon)):
-            min = 250
-            tmp = 0
-            for obstacle in obstacles:
-                if np.linalg.norm(obstacle.center - self.beacon[i]) < min:
-                    min = np.linalg.norm(obstacle.center - self.beacon[i])
-                    tmp = obstacle
-            if tmp != 0:
-                beacon.append([i,np.linalg.norm(tmp.center)])
-                nBeacon = nBeacon + 1
-
-        if nBeacon < 2:
-            print("Error: Beacon not found!")
-            beacon = 0
-        return beacon
-
-'''
-class Mapping():
-
-    THRESH_DETECTION = 100
-    BOARD = [[0,0], [2000,0], [2000, -3000], [0, -3000]]
-    BEACON = [[0,0], [2000,0], [2000, -3000], [0, -3000]]
-
-
-    def __init__(self, hokuyo_com, data_center):
-        Thread.__init__(self)
-        self.hokuyo = hokuyo_com
-        self.data_center = data_center
-        self.started = False
-        self.data = None
-        self.bot_pos = None
-        self.bot_orient = None
-
-
-    def __init__(self, startPos, startOrient):
-        self.bot_pos = [startPos]
-        self.bot_orientat = [startOrient]
-
-    def stop(self):
-        self.started = False
-
-    def run(self):
-        self.started = True
-        while self.started:
-
-            # Get new data from Hokuyo
-            self.data = self.hokuyo.get_fresh_data()
-            self.data = self.hokuyo.clean_data(self.data[0], self.data[1])
-            self.data = self.hokuyo.polar2cartesian(self.data[0], self.data[1])
-
-            # Find obstacles
-            raw_obstacles = self.find_obstacles(self.data)
-
-            # Remove obstacle outside the board
-            self.obstacles = self.filter_obstacles(raw_obstacles, Mapping.BOARD, self.bot_pos[-1], self.bot_orient[-1])
-
-            beacon = self.find_beacon(self.obstacles)
-
-            pos = Mapping.getRobPos(beacon, Mapping.BEACON)
-
-            self.bot_pos.append()
-
-    def filter_obstacles(raw_obstacles, board, bot_pos, bot_orien):
-        # Initialize the tab of obstacle
-        obstacles = []
-
-        # Expend the board to compensate for deplacement of the robot
-        extended_board = Tools.extend(board)
-
-        # Move the board so that the robot coordinate are (0,0)
-        extended_board = Tools.shift_relative(extended_board, bot_pos)
-
-        # Rotate the board depending of the last orientation of the robot
-        # -bot_orien is because we want to rotate the board relative to the robot
-        extended_board = Tools.rotate(extended_board, -bot_orien)
-
-        # Filter obstacles
-        for k in range(len(raw_obstacles)):
-            # Only keep the obstacle if it is in the board
-            if(Tools.isIn(extended_board, raw_obstacles[k])):
-                obstacles.append(raw_obstacles[k])
-
-        # Return filtered obstacles
-        return obstacles
-'''
+            self.detect = [beacon[k][1] for k in range(len(beacon))]
+            self.beacon = Tools.rotate(np.array([[0,0], [2000,0], [2000, 3000], [0, 3000]]) - pos, ori)
+            self.bot_pos.append(np.array(pos))
+            self.bot_ori.append(ori)
 
 
 class Obstacle():
@@ -261,7 +242,7 @@ class Obstacle():
         # En gros, calcul du barycentre, et definition du type en fonction du rapport (distmin/distmax)
         # distX = distX au barycentre
         self.pointList = np.array([[self.pointList[k][0] for k in range(len(self.pointList))],
-                                              [self.pointList[k][1] for k in range(len(self.pointList))]])
+                                   [self.pointList[k][1] for k in range(len(self.pointList))]])
         self.center = self.pointList.mean(1)
         self.type = Obstacle.TYPE_ROUND
 
@@ -280,17 +261,34 @@ class Obstacle():
 
 from Graph import *
 from time import sleep
+import simuHokuyo
+from SerialCom import HokuyoCom, find_ports
 
 if __name__ == "__main__":
-    graph = Graph(size=[800,800], scale = 1/10.0)
+    graph = Graph(size=[800, 800], scale=0.1)
 
-    map = Map([1000, -200])
+    map = Map([1000, 200])
+    balise = np.array([[-40, -40], [40, -40], [40, 40], [-40, 40]])
 
-    for i in range(15):
+    #ports = find_ports()
+    #com = HokuyoCom(ports[0])
+    #sleep(0.2)
+
+    for i in range(100):
         print(i)
-        data = map.getData()
+        #data = map.getData()
+
+        #[ranging, angles] = com.get_fresh_data()
+        #[ranging, angles] = com.clean_data(ranging, angles)
+        #data = Tools.polar2cartesian(np.array(angles), np.array(ranging))
+
+        data = simuHokuyo.getHokuyoData([1000, 200+10*i], 3*i/180.0*np.pi, [np.array([0, 0])+balise, np.array([2000, 0])+balise, np.array([2000, 3000])+balise, np.array([0, 3000])+balise])
+
+        data = Tools.polar2cartesian(data)
         map.update(data)
+        print("Position: ", map.bot_pos[-1])
+        print("Angle: ", map.bot_ori[-1]*180/np.pi)
         graph.clearScreen()
         graph.displayMap(map)
-        graph.show(i+1)
-        sleep(1)
+        graph.show()
+        sleep(0.1)
