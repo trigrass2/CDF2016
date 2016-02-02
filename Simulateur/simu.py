@@ -29,7 +29,6 @@ class Window(QWidget):
 
 		self.ofig.append(Shape(3, [(35+30,40+30), (45+30,60+30), (15+30, 60+30)]))
 
-
 		self.resize(500,500)
 		self.center()
 		self.setWindowTitle('Simulateur')
@@ -73,11 +72,11 @@ class Window(QWidget):
 		if collisions.check_collisions(virtual_fig, self.ofig, self.geometry()):
 			virtual_fig.shape.swap(self.fig.shape)
 
-	def tryRotate(self, p0, p2, theta):
+	def tryRotate(self, p0, p2, theta): # p0, p2, theta
 		nbp = self.fig.nbp
 		virtual_fig = Shape(nbp, [(0,0) for i in range(nbp)])
 
-		#recuperer les coord du centre de rotation
+		#recuperer les coord du centre de rotation à partir du milieu de la diagonale plus la position du carré
 		x0 = (abs(p0.x() - p2.x())/2 + min((p0.x(), p2.x())))
 		y0 = (abs(p0.y() - p2.y())/2 + min((p0.y(), p2.y())))
 
@@ -101,11 +100,11 @@ class Window(QWidget):
 		p2 = self.fig.shape.at(2)
 
 		if e.key() == Qt.Key_Up:
-			self.tryTrans(p0, p2, 1)
+			self.tryTrans( p0,p2, 1)
 		elif e.key() == Qt.Key_Down:
-			self.tryTrans(p0, p2, -1)
+			self.tryTrans( p0,p2, -1)
 		elif e.key() == Qt.Key_Left:
-			self.tryRotate(p0, p2, -np.pi/8)
+			self.tryRotate( p0, p2, -np.pi/8)
 		elif e.key() == Qt.Key_Right:
 			self.tryRotate(p0, p2, np.pi/8)
 

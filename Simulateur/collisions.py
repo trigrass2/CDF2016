@@ -74,3 +74,13 @@ def check_collisions(fig, ofig, scene):
 				return True
 	else:
 		return False
+
+'''Si collision :
+		Est ce que l'objet est déplaçable ?
+			Si Oui :
+				Le déplacer
+			Si Non :
+				Rien faire'''
+def check_movable(fig, ofig, scene):
+	#TODO : Déplacement des objets si c'est possible
+	pass
