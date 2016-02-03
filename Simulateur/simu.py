@@ -1,18 +1,19 @@
 #!/usr/bin/python3.4
 
-'''
+"""
 Pour le moment, le simu se resume a un petit carre qui avance, recule, tourne quand on appuie sur les fleches du clavier
+"""
+#TODO : capteurs, objets
 
-A faire (plutot vite):
--capteurs
-'''
 
 import sys
 import numpy as np
-import collisions
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPolygonF
 from PyQt5.QtCore import Qt, QPointF
+
+import collisions
+import Objects
 
 class Window(QWidget):
 	def __init__(self):
@@ -21,13 +22,18 @@ class Window(QWidget):
 		self.initGui()
 
 	def initGui(self):
-		self.fig = Shape(4, [(240,240),(270,240),(270,270),(240,270)])
+		self.robot = Objects.Robot(255,255)
 		self.pas = 3#en pixels
 
+		'''
 		#les autres figures (utiles pour les collisions)
 		self.ofig = []
-
 		self.ofig.append(Shape(3, [(35+30,40+30), (45+30,60+30), (15+30, 60+30)]))
+		'''
+
+		#ajout cube
+		self.cubes = []
+		self.cubes.append(Objects.Cube(10,0,0))
 
 		self.resize(500,500)
 		self.center()
@@ -120,13 +126,9 @@ class Window(QWidget):
 		for shape in self.ofig:
 			qp.drawConvexPolygon(shape.shape)
 
-class Shape():
-	def __init__(self, nbp, list_of_points):
-		self.shape = QPolygonF(nbp)
-		for i in range(nbp):
-			pt = list_of_points[i]
-			self.shape.replace(i, QPointF(pt[0], pt[1]))
-		self.nbp = nbp
+		for cube in self.cubes:
+			qp.drawConvexPolygon(cube.shape.shape)
+
 
 if __name__ == '__main__':
 	app = QApplication(sys.argv)
