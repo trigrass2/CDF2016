@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3.4
 
 import math
 import random
@@ -33,7 +33,7 @@ class NeuralNet:
 				for k in range(0,t_couches[i+1]):
 					(self.w).append(random.uniform(-1,1))
 
-
+			
 	#private methods
 	def __sum__(self,i,j):
 		if i <= 1:
@@ -49,18 +49,18 @@ class NeuralNet:
 			(first_n,last_n) = self.index_couche(i-1)
 			for k in range(0,self.length[i-2]+1):
 				tup[0] = self.neurone[first_n+k]
-
+				
 				(first_w,last_w) = self.index_poids(i-1,k)
 				tup[1] = self.w[first_w+(j-1)]
 
 				res.append((tup[0],tup[1]))
-
+		
 			for tup in res:
 				sum_pond += tup[1]*tup[0]
 
 			return sum_pond
-
-	#public methods
+	
+	#public methods	
 	def index_couche(self,n):
 		ind = 0
 
@@ -69,7 +69,7 @@ class NeuralNet:
 
 		if n == self.nbc:
 			return (ind,ind+self.length[n-1])
-		else:
+		else:	
 			return (ind,ind+self.length[n-1]+1)
 
 	def indice_neurone(self,i,j):
@@ -104,7 +104,7 @@ class NeuralNet:
 			for i in range(2,self.nbc+1):
 				for j in range(0,self.length[i-1]):
 					self.neurone[self.indice_neurone(i,j+1)] = f(self.__sum__(i,j+1))
-
+	
 	def learn(self,X,Y,f,alpha,seuil):
 		finished = False
 		compteur = 0
@@ -117,7 +117,7 @@ class NeuralNet:
 				self.calc(X[i],f)
 				d = []
 				error = 0.0
-
+				
 				(first_n,last_n) = self.index_couche(self.nbc)
 				out_vect = self.neurone[first_n:last_n]
 				targ_vect = Y[i]
@@ -129,7 +129,7 @@ class NeuralNet:
 				if error >= seuil:
 					cmpt += 1
 					finished = False
-
+				
 				#print error
 
 				d.append([])
@@ -149,14 +149,14 @@ class NeuralNet:
 
 						out = self.neurone[self.indice_neurone(c,j)]
 						(d[-1]).append(out*(1-out)*sum_fact)
-
+				 
 				for j in range(1,self.nbc):
 					(first_n,last_n) = self.index_couche(j)
 					for k in range(0,last_n-first_n):
 						(first_w,last_w) = self.index_poids(j,k)
 						for l in range(first_w,last_w):
 							self.w[l] += alpha*self.neurone[self.indice_neurone(j,k)]*d[-j][l-first_w]
-			compteur += 1
+			compteur += 1 
 			#print('-----------------',cmpt)
 
 

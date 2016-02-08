@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3.4
 
 import random
 import copy
@@ -42,7 +42,7 @@ def select_pop(pop, scores, data):
 	roulette = []
 
 	for i in index:
-		rate = int(round((1.0*scores[i]/total_score)*360))
+		rate = int(round((scores[i]/total_score)*360))
 		roulette += [i]*rate
 
 	#selection des elements de base de la nouvelle population
@@ -57,7 +57,7 @@ def select_pop(pop, scores, data):
 
 	#on croise les individus selectionnes pour reconstituer une autre partie de notre population
 	nb_tours = int(round(data.taux_croisements*taille))
-	taille_gene = len_reseau/data.nb_croisements
+	taille_gene = len_reseau//data.nb_croisements
 
 	for i in range(nb_tours):
 		indiv = []
