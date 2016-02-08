@@ -1,16 +1,14 @@
 # -*- coding: utf8 -*-
 __author__ = 'adrie_000'
 
-from math import pi, cos, sin
+from math import pi
 from time import sleep
-from threading import Thread
 import glob
 import numpy
-
 from serial import *
 
 
-class GeneralSerialCom():
+class GeneralSerialCom:
     def __init__(self, port=None, specific_test_request=None, specific_test_answer=None):
         self.port = port
         if port is None:
@@ -68,6 +66,8 @@ def test_port(possible_ports, specific_test_request, specific_test_answer):
 
 class HokuyoCom(GeneralSerialCom):
 
+    undesirables_limits=[40, 4000]
+
     def __init__(self, port=None, specific_test_request=None, specific_test_answer=None):
         GeneralSerialCom.__init__(self, port, specific_test_request, specific_test_answer)
 
@@ -99,7 +99,7 @@ class HokuyoCom(GeneralSerialCom):
         self.write(''.join(b for b in sn))
         self.write(''.join(b for b in LF))
 
-        sleep(0.250)
+        sleep(0.1) # 0.25
         ret = []
         mes_count = 0
         count = 0
@@ -132,3 +132,17 @@ class HokuyoCom(GeneralSerialCom):
         # Create the Angle tab
         doub = [-k*4*pi/3/n + 2*pi/3 for k in range(n)]
         return [ret, doub]
+
+    def clean_data(self, ret, doub):
+        """ Supprime les valeurs abérentes
+        :param ret: [int, int, int, ...]
+        :param doub: [double, double, double, ...]
+        :return: [range, angle], range = [int, int, int, ...], angle = [double, double, double, ...]
+        """
+        range_cleaned = []
+        angle_cleaned = []
+        for k in range(len(ret)):
+            if not (ret[k] < HokuyoCom.undesirables_limits[0] or ret[k]>HokuyoCom.undesirables_limits[1]):
+                range_cleaned.append(ret[k])
+                angle_cleaned.append(doub[k])
+        return [angle_cleaned, range_cleaned]

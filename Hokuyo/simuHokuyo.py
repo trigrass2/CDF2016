@@ -24,13 +24,23 @@ def setMaxTheta(angle):
         minTheta = minTheta + 2*np.pi
     print("Max Theta value changed.")
 
-def getHokuyoData(botPos, botAngle, obstacles):
+def getHokuyoData(botPos, botAngle, obstacles, error):
+    ''' Return a liste of points in polar coordinate
+    :param botPos: [double, double]
+    :param botAngle: double
+    :param obstacles: List of List of points
+    :param error: error used to create brownian noise (in millimeters)
+    :return: List of points in polar coordinates
+    '''
+    # Initialize variable
+    cum_error = error
     botAngle = -botAngle
     theta = minTheta
     dtheta = (maxTheta-minTheta)/N
+
     result = []
     while theta < maxTheta:
-        D = 4000
+        D = 5000
         if((theta+botAngle)%np.pi == 0):
             for obstacle in obstacles:
 
@@ -58,6 +68,10 @@ def getHokuyoData(botPos, botAngle, obstacles):
                         if np.linalg.norm(vecteur) < D and np.cos(theta+botAngle+np.pi/2 - direction) > 0.5:
                             D = np.linalg.norm(M-botPos)
 
+        # Brownian noise
+        cum_error = cum_error + np.random.normal(0, error)
+        D = D + cum_error
+
         #Save distance
         if D < 4000:
             result.append([theta, D])
@@ -73,11 +87,11 @@ if __name__ == "__main__":
     balise = np.array([[-40, -40], [40, -40], [40, 40], [-40, 40]])
     beacon = [np.array([0, 0])+balise, np.array([2000, 0])+balise, np.array([2000, 3000])+balise, np.array([0, 3000])+balise]
 
-    for i in range(200, 2500, 100):
+    for i in range(0, 150, 1):
+        data = getHokuyoData([1000, 200], 2*i/180.0*np.pi, [np.array([0, 0])+balise, np.array([2000, 0])+balise,
+                                                                 np.array([2000, 3000])+balise, np.array([0, 3000])+balise], 5)
 
-        R = getHokuyoData(np.array([1000, 200]), i/50*np.pi/180, beacon)
-
-        R = Tools.polar2cartesian(R)
+        R = Tools.polar2cartesian(data)
         gr = Graph.Graph()
         gr.displayCloud(R, [0, 255, 0], 2, 0)
         gr.show()
