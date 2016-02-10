@@ -14,13 +14,16 @@ class GhostShape():
 
 class SimuObject():
 
-    def __init__(self, movable, x, y, heading, nbp, list_of_points):
+    def __init__(self, movable, mass, x, y, heading, list_of_points):
 
         #Propriétés de l'objet
         self.movable = movable
+        self.mass = mass
         self.x = x
         self.y = y
         self.heading = heading
+
+        nbp = len(list_of_points)
 
         #Propriétés de la représentation graphique
         self.shape = QPolygonF(nbp)
@@ -29,26 +32,31 @@ class SimuObject():
             self.shape.replace(i, QPointF(pt[0], pt[1]))
         self.nbp = nbp #nombre de points dans l'objet
 
-        # TODO
+
 
 class Cube(SimuObject):
     def __init__(self, size, x, y, heading):  # Pour l'instant x et y sont inutiles
+
         self.size = 10
-        super().__init__(True, x, y, heading,  4, [(x - self.size/2, y - self.size/2),
-                                                   (x - self.size/2, y + self.size/2),
-                                                   (x + self.size/2, y + self.size/2),
-                                                   (x + self.size/2, y - self.size/2)])
+
+        mass = 1
+        list_of_points = [(x - self.size/2, y - self.size/2),
+                          (x - self.size/2, y + self.size/2),
+                          (x + self.size/2, y + self.size/2),
+                          (x + self.size/2, y - self.size/2)]
+
+        super().__init__(True, mass, x, y, heading, list_of_points)
+
 
 class Robot(SimuObject):
     def __init__(self, x, y, heading):  # Pour l'instant x et y sont inutiles
 
-        #Override de x, y , heading pour un test
-        x = 255
-        y = 255
-        heading = 0
-
         self.size = 30
-        super().__init__(True, x, y, heading, 4, [(x - self.size / 2, y - self.size / 2),
-                                                  (x + self.size / 2, y - self.size / 2),
-                                                  (x + self.size / 2, y + self.size / 2),
-                                                  (x - self.size / 2, y + self.size / 2)])
+
+        mass = 10
+        list_of_points = [(x - self.size / 2, y - self.size / 2),
+                          (x + self.size / 2, y - self.size / 2),
+                          (x + self.size / 2, y + self.size / 2),
+                          (x - self.size / 2, y + self.size / 2)]
+
+        super().__init__(True, mass, x, y, heading, list_of_points)

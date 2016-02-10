@@ -63,17 +63,13 @@ class Window(QWidget):
         self.drawPol(qp)
         qp.end()
 
-    def tryTrans(self, movingObject, sens):
+    def tryTrans(self, movingObject, heading, sens):
 
         nbp = movingObject.nbp  # nombre de points
         virtual_fig = Objects.GhostShape(nbp, [(0, 0) for i in range(nbp)])
 
-        p0 = movingObject.shape.at(0)
-        p1 = movingObject.shape.at(1)
-        p2 = movingObject.shape.at(2)
 
         #Détermination de la liste des autres objets
-
         otherObjects = self.allObjects.copy()
         otherObjects.remove(movingObject)
 
@@ -84,16 +80,18 @@ class Window(QWidget):
             print('x =',obj.x,'y =',obj.y)
         '''
 
-        # on determine le vecteur de translation a partir des coord du centre et du milieu du trait avant du carre
-        x0 = (abs(p0.x() - p2.x()) / 2 + min((p0.x(), p2.x())))
-        y0 = (abs(p0.y() - p2.y()) / 2 + min((p0.y(), p2.y())))
+        # on determine le vecteur de translation a partir du heading et des coordonnées
 
-        x1 = abs(p0.x() - p1.x()) / 2 + min((p0.x(), p1.x()))
-        y1 = (abs(p0.y() - p1.y()) / 2 + min((p0.y(), p1.y())))
+        x1 = movingObject.x + np.cos(heading*np.pi/180)
+        y1 = movingObject.y + np.sin(heading*np.pi/180)
+        print("(x1,y1) =",x1,y1)
+        norme = np.sqrt((x1 - movingObject.x) ** 2 + (y1 - movingObject.y) ** 2)
 
-        norme = np.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
-        v_t = (sens * (x1 - x0) * self.pas / norme, sens * (y1 - y0) * self.pas / norme)
-        Trans = np.array([[1, 0, v_t[0]], [0, 1, v_t[1]]])  # matrice de translation
+        vect_trans = (sens * (x1 - movingObject.x) * self.pas / norme,
+                      sens * (y1 - movingObject.y) * self.pas / norme)
+
+        Trans = np.array([[1, 0, vect_trans[0]],
+                          [0, 1, vect_trans[1]]])  # matrice de translation
 
         #Dessin de la nouvelle figure et suppression de l'autre
         for i in range(nbp):
@@ -104,8 +102,36 @@ class Window(QWidget):
             virtual_fig.shape.replace(i, QPointF(new_point[0], new_point[1]))
 
         #Ckeck de la collision
-        if collisions.check_collisions(virtual_fig, otherObjects, self.geometry()):
+        '''
+        Si il n'y a pas collision entre le robot et un objet
+            Remplacer la figure virtuelle par le robot
+        Sinon
+            Si l'objet peut se déplacer
+                On tente de déplacer l'objet
+                Si True
+                    On déplace le robot
+        '''
+        collTest = collisions.check_collisions(virtual_fig, otherObjects, self.geometry())
+        if len(collTest)==0:
             virtual_fig.shape.swap(movingObject.shape)
+            movingObject.y += vect_trans[1]
+            movingObject.x += vect_trans[0]
+            print("(x,y) = (",movingObject.x,",",movingObject.y,")")
+            return True
+        else:
+            bool = True
+            for obj in collTest:
+                if(obj.movable):
+                    if(self.tryTrans(obj, movingObject.heading*sens,1)):
+                        bool = bool and True
+                    else:
+                        bool = bool and False
+            if bool:
+                virtual_fig.shape.swap(movingObject.shape)
+                movingObject.y += vect_trans[1]
+                movingObject.x += vect_trans[0]
+                print("(x,y) = (",movingObject.x,",",movingObject.y,")")
+            return bool
 
     def tryRotate(self, movingObject, theta):  # p0, p2, theta
         nbp = movingObject.nbp
@@ -134,21 +160,21 @@ class Window(QWidget):
             # mettre a jour les points
             virtual_fig.shape.replace(i, QPointF(new_point[0] + x0, new_point[1] + y0))
 
-        if collisions.check_collisions(virtual_fig, otherObjects, self.geometry()):
+        if len(collisions.check_collisions(virtual_fig, otherObjects, self.geometry()))==0:
             virtual_fig.shape.swap(movingObject.shape)
+            movingObject.heading = np.mod(movingObject.heading + theta*180/np.pi,360)
+            print("theta =",movingObject.heading)
 
     def keyPressEvent(self, e): #Override de la méthode QWidget
-        p0 = self.robot.shape.at(0)
-        p2 = self.robot.shape.at(2)
 
         if e.key() == Qt.Key_Up:
-            self.tryTrans( self.robot, 1)
+            self.tryTrans( self.robot, self.robot.heading,1)
         elif e.key() == Qt.Key_Down:
-            self.tryTrans( self.robot, -1)
+            self.tryTrans( self.robot, self.robot.heading,-1)
         elif e.key() == Qt.Key_Left:
-            self.tryRotate( self.robot, -np.pi / 16)
+            self.tryRotate( self.robot, -np.pi / 8)
         elif e.key() == Qt.Key_Right:
-            self.tryRotate( self.robot, np.pi / 16)
+            self.tryRotate( self.robot, np.pi / 8)
 
         # mettre a jour la scene
         self.update()

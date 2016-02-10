@@ -67,17 +67,22 @@ def check_poly_coll(fig, ofig):
 
     return True
 
-
+'''
+Check les collisions, d'abord par rectangle vu que c'est super rapide, puis si il y a collision
+on check avec la méthode par polygones
+Si il y a collision on retourne l'objet collisionné
+'''
 def check_collisions(fig, ofig, scene):
-    if check_borders(fig, scene.height(), scene.width()):
-        for i in range(len(ofig)):
-            if check_rect_coll(fig, ofig[i]):
-                if not check_poly_coll(fig, ofig[i]):
-                    return False
-        return True
-    else:
-        return False
 
+    collisionedObjects = []
+
+    if check_borders(fig, scene.height(), scene.width()):
+        for obj in ofig:
+            if check_rect_coll(fig, obj):
+                if not check_poly_coll(fig, obj):
+                    collisionedObjects.append(obj)
+
+    return collisionedObjects
 
 '''Si collision :
 		Est ce que l'objet est déplaçable ?
@@ -87,6 +92,8 @@ def check_collisions(fig, ofig, scene):
 				Rien faire'''
 
 
-def check_movable(fig, ofig, scene):
+def get_movable(fig, ofig, scene):
+
+
     # TODO : Déplacement des objets si c'est possible
     pass
