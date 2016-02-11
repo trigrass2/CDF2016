@@ -19,6 +19,7 @@ def check_rect_coll(fig, ofig):
     if frect.left() > orect.right() or frect.right() < orect.left() or frect.top() > orect.bottom() or frect.bottom() < orect.top():
         return False
     else:
+        print("collision carré")
         return True
 
 
@@ -42,7 +43,7 @@ def check_poly_coll(fig, ofig):
                 c = False
                 break
         if c:
-            return False
+            return False #collision poly
 
     for i in range(ofig.nbp):
         P = ofig.shape.at(i)
@@ -63,8 +64,9 @@ def check_poly_coll(fig, ofig):
                 c = False
                 break
         if c:
-            return False
+            return False #pas collision poly
 
+    print("pas collision poly")
     return True
 
 '''
@@ -79,7 +81,7 @@ def check_collisions(fig, ofig, scene):
     if check_borders(fig, scene.height(), scene.width()):
         for obj in ofig:
             if check_rect_coll(fig, obj):
-                if not check_poly_coll(fig, obj):
+                if check_poly_coll(fig, obj):
                     collisionedObjects.append(obj)
 
     return collisionedObjects

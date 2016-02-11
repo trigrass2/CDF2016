@@ -1,3 +1,5 @@
+#!/usr/bin/python3.4
+
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPolygonF
 from PyQt5.QtCore import Qt, QPointF
@@ -55,8 +57,8 @@ class Robot(SimuObject):
 
         mass = 10
         list_of_points = [(x - self.size / 2, y - self.size / 2),
-                          (x + self.size / 2, y - self.size / 2),
+                          (x - self.size / 2, y + self.size / 2),
                           (x + self.size / 2, y + self.size / 2),
-                          (x - self.size / 2, y + self.size / 2)]
+                          (x + self.size / 2, y - self.size / 2)]
 
         super().__init__(True, mass, x, y, heading, list_of_points)
