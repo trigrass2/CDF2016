@@ -34,7 +34,6 @@ def getHokuyoData(botPos, botAngle, obstacles, error):
     '''
     # Initialize variable
     cum_error = error
-    botAngle = -botAngle
     theta = minTheta
     dtheta = (maxTheta-minTheta)/N
 
@@ -69,7 +68,8 @@ def getHokuyoData(botPos, botAngle, obstacles, error):
                             D = np.linalg.norm(M-botPos)
 
         # Brownian noise
-        cum_error = cum_error + np.random.normal(0, error)
+        if error>0:
+            cum_error = cum_error + np.random.normal(0, error)
         D = D + cum_error
 
         #Save distance
@@ -82,16 +82,33 @@ def getHokuyoData(botPos, botAngle, obstacles, error):
 
     return np.array(result).transpose()
 
-import Tools, Graph, time
+import Tools, Graph
+import matplotlib.pyplot as plt
 if __name__ == "__main__":
+
+    fig = plt.figure(0)
+    plt.ion()
+    plt.show()
+
     balise = np.array([[-40, -40], [40, -40], [40, 40], [-40, 40]])
     beacon = [np.array([0, 0])+balise, np.array([2000, 0])+balise, np.array([2000, 3000])+balise, np.array([0, 3000])+balise]
 
-    for i in range(0, 150, 1):
-        data = getHokuyoData([1000, 200], 2*i/180.0*np.pi, [np.array([0, 0])+balise, np.array([2000, 0])+balise,
-                                                                 np.array([2000, 3000])+balise, np.array([0, 3000])+balise], 5)
+    var = ''
+    while var != 'quit':
+        var = input("Please enter state: ")
+        if var == 'quit':
+            break
+        var = var.split(',')
+        x = int(var[0])
+        y = int(var[1])
+        o = int(var[2])
+        data = getHokuyoData([x, y], o/180.0*np.pi, [np.array([0, 0])+balise, np.array([2000, 0])+balise,
+                                                                 np.array([2000, 3000])+balise, np.array([0, 3000])+balise], 0)
 
         R = Tools.polar2cartesian(data)
-        gr = Graph.Graph()
-        gr.displayCloud(R, [0, 255, 0], 2, 0)
-        gr.show()
+
+        plt.clf()
+        plt.axis([-3000, 3000, -3000, 3000])
+        plt.scatter(R.transpose()[0], R.transpose()[1])
+        plt.scatter([0],[0], c='red')
+        plt.draw()
