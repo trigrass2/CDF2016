@@ -75,14 +75,15 @@ Si il y a collision on retourne l'objet collisionné
 def check_collisions(fig, ofig, scene):
 
     collisionedObjects = []
+    collBorders = check_borders(fig, scene.height(), scene.width())
 
-    if check_borders(fig, scene.height(), scene.width()):
+    if collBorders:
         for obj in ofig:
             if check_rect_coll(fig, obj):
-                if not check_poly_coll(fig, obj):
+                if check_poly_coll(fig, obj):
                     collisionedObjects.append(obj)
 
-    return collisionedObjects
+    return (collisionedObjects, collBorders)
 
 '''Si collision :
 		Est ce que l'objet est déplaçable ?
