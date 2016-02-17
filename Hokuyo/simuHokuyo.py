@@ -37,18 +37,18 @@ def getHokuyoData(botPos, botAngle, obstacles, error):
     theta = minTheta
     dtheta = (maxTheta-minTheta)/N
 
-    result = []
+    result = np.array([[1000.0],[0]])
     while theta < maxTheta:
         D = 5000
         if((theta+botAngle)%np.pi == 0):
             for obstacle in obstacles:
 
                 for i in range(len(obstacle)):
-                    if (obstacle[(i-1)][0]-botPos[0])*(obstacle[i][0]-botPos[0]) <= 0:
-                        if (obstacle[i][0]-botPos[0]) != 0:
-                            d = obstacle[i-1][1] - botPos[1] + (obstacle[i-1][0]-botPos[0])/(obstacle[i][0]-botPos[0]) * (obstacle[i][1]-obstacle[i-1][1])
+                    if (obstacle[0,i-1]-botPos[0])*(obstacle[0,i]-botPos[0]) <= 0:
+                        if (obstacle[0,i]-botPos[0]) != 0:
+                            d = obstacle[1,i-1] - botPos[1] + (obstacle[0,i-1]-botPos[0])/(obstacle[0,i]-botPos[0]) * (obstacle[1,i]-obstacle[1,i-1])
                         else:
-                            d = obstacle[i][1] - botPos[1]
+                            d = obstacle[1,i] - botPos[1]
                         if d<D:
                             D = d
         else:
@@ -56,12 +56,12 @@ def getHokuyoData(botPos, botAngle, obstacles, error):
             b = botPos[1] - a*botPos[0]
             for obstacle in obstacles:
                 for i in range(len(obstacle)):
-                    dA = obstacle[i-1][0]*a+b-obstacle[i-1][1]
-                    dB = obstacle[i][0]*a+b-obstacle[i][1]
-                    d = np.linalg.norm(obstacle[i] - obstacle[i-1])
+                    dA = obstacle[0,i-1]*a+b-obstacle[1,i-1]
+                    dB = obstacle[0,i]*a+b-obstacle[1,i]
+                    d = np.linalg.norm(obstacle[:,i] - obstacle[:,i-1])
                     if dA*dB < 0:
                         e = d/(np.abs(dA)+np.abs(dB))*np.abs(dA)
-                        M = obstacle[i-1] + (obstacle[i]-obstacle[i-1])*e/d
+                        M = obstacle[:,i-1] + (obstacle[:,i]-obstacle[:,i-1])*e/d
                         vecteur = M-botPos
                         direction = np.arctan2(vecteur[1], vecteur[0])
                         if np.linalg.norm(vecteur) < D and np.cos(theta+botAngle+np.pi/2 - direction) > 0.5:
@@ -74,15 +74,20 @@ def getHokuyoData(botPos, botAngle, obstacles, error):
 
         #Save distance
         if D < 4000:
-            result.append([theta, D])
+            if result[0,0] == 1000:
+                result[0,0] = theta
+                result[1,0] = D
+            else:
+                result = np.append(result, np.array([[theta], [D]]), axis=1)
         theta = theta + dtheta
 
-    if not result:
-        result = [[0, 0]]
+    if result[0,0] == 1000:
+        result = np.array([[0], [0]])
 
-    return np.array(result).transpose()
+    return result
 
-import Tools, Graph
+
+from Hokuyo.Tools import polar2cartesian
 import matplotlib.pyplot as plt
 if __name__ == "__main__":
 
@@ -90,8 +95,8 @@ if __name__ == "__main__":
     plt.ion()
     plt.show()
 
-    balise = np.array([[-40, -40], [40, -40], [40, 40], [-40, 40]])
-    beacon = [np.array([0, 0])+balise, np.array([2000, 0])+balise, np.array([2000, 3000])+balise, np.array([0, 3000])+balise]
+    balise = np.array([[-40, 40, 40, -40], [-40, -40, 40, 40]])
+    beacon = [np.array([[0], [0]])+balise, np.array([[2000], [0   ]])+balise, np.array([[2000], [3000]])+balise, np.array([[0   ], [3000]])+balise]
 
     var = ''
     while var != 'quit':
@@ -102,13 +107,13 @@ if __name__ == "__main__":
         x = int(var[0])
         y = int(var[1])
         o = int(var[2])
-        data = getHokuyoData([x, y], o/180.0*np.pi, [np.array([0, 0])+balise, np.array([2000, 0])+balise,
-                                                                 np.array([2000, 3000])+balise, np.array([0, 3000])+balise], 0)
+        data = getHokuyoData([x, y], o/180.0*np.pi, beacon, 0)
+        print(data)
+        R = polar2cartesian(data)
 
-        R = Tools.polar2cartesian(data)
 
         plt.clf()
         plt.axis([-3000, 3000, -3000, 3000])
-        plt.scatter(R.transpose()[0], R.transpose()[1])
-        plt.scatter([0],[0], c='red')
+        plt.scatter(R[0], R[1])
+        plt.scatter([0], [0], c='red')
         plt.draw()

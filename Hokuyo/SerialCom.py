@@ -82,24 +82,24 @@ class HokuyoCom(GeneralSerialCom):
         start = 44
         end = 725
         # Returns [arraylist of millimeters,arraylist of corresponding rads]
-        self.write('M')
-        self.write('S')
+        self.write('M'.encode())
+        self.write('S'.encode())
 
-        s = [chr(0x30+start/1000), chr(0x30+((start/100) % 10)), chr(0x30+((start/10) % 10)), chr(0x30+ (start % 10))]
-        e = [chr(0x30+(end/1000)), chr(0x30+((end/100) % 10)), chr(0x30+((end/10) % 10)), chr(0x30 + (end % 10) )]
+        s = [chr(0x30+int(start/1000)), chr(0x30+(int(start/100) % 10)), chr(0x30+(int(start/10) % 10)), chr(0x30+ (start % 10))]
+        e = [chr(0x30+int(end/1000)), chr(0x30+(int(end/100) % 10)), chr(0x30+(int(end/10) % 10)), chr(0x30 + (end % 10) )]
        
         cluster = 1
-        cc = [chr(0x30 + ((cluster / 10) % 10)), chr(0x30 + (cluster % 10))]
+        cc = [chr(0x30 + (int(cluster / 10) % 10)), chr(0x30 + (cluster % 10))]
         si = chr(0x30)
         sn = [chr(0x30), chr(0x31)]
-        self.write(''.join(b for b in s))
-        self.write(''.join(b for b in e))
-        self.write(''.join(b for b in cc))
-        self.write(''.join(b for b in si))
-        self.write(''.join(b for b in sn))
-        self.write(''.join(b for b in LF))
+        self.write(''.join(b for b in s).encode())
+        self.write(''.join(b for b in e).encode())
+        self.write(''.join(b for b in cc).encode())
+        self.write(''.join(b for b in si).encode())
+        self.write(''.join(b for b in sn).encode())
+        self.write(LF)
 
-        sleep(0.1) # 0.25
+        sleep(0.25) # 0.25
         ret = []
         mes_count = 0
         count = 0
@@ -130,7 +130,7 @@ class HokuyoCom(GeneralSerialCom):
 
         n = len(ret)
         # Create the Angle tab
-        doub = [-k*4*pi/3/n + 2*pi/3 for k in range(n)]
+        doub = [k*4*pi/3/n - 2*pi/3 for k in range(n)]
         return [ret, doub]
 
     def clean_data(self, ret, doub):
@@ -145,4 +145,4 @@ class HokuyoCom(GeneralSerialCom):
             if not (ret[k] < HokuyoCom.undesirables_limits[0] or ret[k]>HokuyoCom.undesirables_limits[1]):
                 range_cleaned.append(ret[k])
                 angle_cleaned.append(doub[k])
-        return [angle_cleaned, range_cleaned]
+        return angle_cleaned, range_cleaned
