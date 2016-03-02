@@ -215,7 +215,7 @@ if __name__ == "__main__":
     #sleep(0.2)
 
     for i in range(180):
-
+        '''
         # POUR LA SIMULATION
 
         # Hors de la boucle
@@ -233,7 +233,7 @@ if __name__ == "__main__":
         map.bot_pos[-1] # Dernière position
 
         # FIN DE POUR LA SIMULATION
-
+        '''
 
 
         #th = np.array([[1000], [200+100*i]])
