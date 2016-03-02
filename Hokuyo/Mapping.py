@@ -144,8 +144,6 @@ class Map:
 
         beacon = find_beacon(self.obstacles, self.beacon)
 
-
-
         if beacon != 0:
             print("%d beacons found"%len(beacon))
 
@@ -171,6 +169,9 @@ class Map:
             self.bot_ori.append(ori)
             self.detect = [beacon[k][1] for k in range(len(beacon))]
             self.beacon = Tools.rotate(Map.BEACON - pos, -self.bot_ori[-1])
+
+        for obstacle in self.obstacles:
+            self.obstacles.center = Tools.rotate(self.obstacles.center, self.bot_ori[-1])+self.bot_pos[-1]
 
 
 class Obstacle():
@@ -214,6 +215,27 @@ if __name__ == "__main__":
     #sleep(0.2)
 
     for i in range(180):
+
+        # POUR LA SIMULATION
+
+        # Hors de la boucle
+        #map = Map(position initial, angle_initial)
+        map = Map(np.array([[1000], [200]]), 0)
+
+        # Dans la boucle
+        #data = getHokuyoData(robot_position, angle_radian, liste d'objets, bruit)
+        data = getHokuyoData([1000, 200], i*2/180.0*np.pi, beacon, 0)
+        data = Tools.polar2cartesian(data)
+        map.update(data)
+
+        # Pour recuperer les données
+        map.bot_ori[-1] # Dernière orientation
+        map.bot_pos[-1] # Dernière position
+
+        # FIN DE POUR LA SIMULATION
+
+
+
         #th = np.array([[1000], [200+100*i]])
 
         # REEL
