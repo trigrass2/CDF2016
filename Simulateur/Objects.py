@@ -55,8 +55,16 @@ class Robot(SimuObject):
 
         mass = 10
         list_of_points = [(x - self.size / 2, y - self.size / 2),
-                          (x + self.size / 2, y - self.size / 2),
+                          (x - self.size / 2, y + self.size / 2),
                           (x + self.size / 2, y + self.size / 2),
-                          (x - self.size / 2, y + self.size / 2)]
+                          (x + self.size / 2, y - self.size / 2)]
 
         super().__init__(True, mass, x, y, heading, list_of_points)
+
+class Cone(SimuObject):
+    def __init__(self, anchorPoint, R, heading):
+        list_of_points = [(anchorPoint.x(), anchorPoint.y()),(0,0),(0,0)]
+        mass = 0
+        self.rayon = R
+
+        super().__init__(False, mass, 0, 0, heading, list_of_points)
