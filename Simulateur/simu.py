@@ -14,6 +14,7 @@ from PyQt5.QtGui import QBrush, QColor, QPainter, QPolygonF
 from PyQt5.QtCore import Qt, QPointF
 
 import collisions
+import capteurs
 import Objects
 
 
@@ -25,12 +26,13 @@ class Window(QWidget):
 
     def initGui(self):
 
-        self.pas = 2  # en pixels
+        self.pas = 3  # en pixels
 
         self.allObjects = []
 
         self.robot = Objects.Robot(255, 255, 0)
         self.allObjects.append(self.robot)
+        self.cone = None
 
         '''
 		#les autres figures (utiles pour les collisions)
@@ -43,6 +45,13 @@ class Window(QWidget):
         self.cubes.append(Objects.Cube(20, 290, 240, 0))
         self.cubes.append(Objects.Cube(20, 40, 40, 0))
         self.cubes.append(Objects.Cube(20, 40, 80, 0))
+
+        '''
+        capteur à mettre plus proprement dans un tableau dédié
+        voir aussi la gestion des key event
+        '''
+        self.cone = capteurs.Sonar(QPointF(self.robot.x, self.robot.y), self.robot.heading, 60)
+        self.cone.update(QPointF(self.robot.x, self.robot.y), self.robot.heading)
 
 
         for cube in self.cubes:
@@ -81,7 +90,6 @@ class Window(QWidget):
         '''
 
         # on determine le vecteur de translation a partir du heading et des coordonnées
-        print("heading",heading)
         x1 = movingObject.x + np.cos(heading*np.pi/180)
         y1 = movingObject.y + np.sin(heading*np.pi/180)
         #print("(x1,y1) =",x1,y1)
@@ -112,7 +120,6 @@ class Window(QWidget):
                     On déplace le robot
         '''
         (collTest, collBorders) = collisions.check_collisions(virtual_fig, otherObjects, self.geometry())
-        print(collBorders)
         if not collBorders:
             return False
         elif len(collTest)==0:
@@ -175,12 +182,16 @@ class Window(QWidget):
 
         if e.key() == Qt.Key_Up:
             self.tryTrans( self.robot, self.robot.heading,1)
+            self.cone.update(QPointF(self.robot.x, self.robot.y), self.robot.heading)
         elif e.key() == Qt.Key_Down:
             self.tryTrans( self.robot, self.robot.heading,-1)
+            self.cone.update(QPointF(self.robot.x, self.robot.y), self.robot.heading)
         elif e.key() == Qt.Key_Left:
             self.tryRotate( self.robot, -np.pi / 8)
+            self.cone.update(QPointF(self.robot.x, self.robot.y), self.robot.heading)
         elif e.key() == Qt.Key_Right:
             self.tryRotate( self.robot, np.pi / 8)
+            self.cone.update(QPointF(self.robot.x, self.robot.y), self.robot.heading)
 
         # mettre a jour la scene
         self.update()
@@ -190,6 +201,7 @@ class Window(QWidget):
         qp.setBrush(QColor(255, 0, 0))
 
         qp.drawConvexPolygon(self.robot.shape)
+        #qp.drawConvexPolygon(self.cone.poly.shape)
 
         for cube in self.cubes:
             qp.drawConvexPolygon(cube.shape)
