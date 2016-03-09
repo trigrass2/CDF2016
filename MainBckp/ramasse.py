@@ -13,22 +13,36 @@ class Ramasse():
         self.obst = None
         self.position = None
         self.objectif = None
-        self.r=(25*sqrt(2)/2)+5
+        self.r=(290*sqrt(2)/2)+5
 
 
     @property
     def objectif(self):
-        return self.objectif
+        return self.__objectif
 
     @objectif.setter
     def objectif(self,coord):
-        if coord[0]-self.r<=0:
-            if coord[1]-self.r<=0:
-                return self.r,self.r
-            elif coord[1]+self.r>=3000:
-                return self.r, 3000-self.r
+        if coord[0]-self.r<=0: # si on est le long de la paroi gauche
+            if coord[1]-self.r<=0: # si on est le long de la paroi basse
+                self.__objectif=(self.r,self.r)
+            elif coord[1]+self.r>=3000: # si on est le long de la paroi haute
+                self.__objectif=(self.r, 3000-self.r)
             else:
-                return self.r, coord[1]
+                self.__objectif = (self.r, coord[1])
+        elif coord[0]+self.r>=2000: # si on est le long de la paroi droite
+            if coord[1]-self.r<=0: # si on est le long de la paroi basse
+                self.__objectif = (2000-self.r,self.r)
+            elif coord[1]+self.r>=3000: # si on est le long de la paroi haute
+                self.__objectif = (2000-self.r, 3000-self.r)
+            else:
+                self.__objectif = (2000-self.r, coord[1])
+        else:
+            if coord[1]-self.r<=0: # si on est le long de la paroi basse
+                self.__objectif=(coord[0],self.r)
+            elif coord[1]+self.r>=3000: # si on est le long de la paroi haute
+                self.__objectif=(coord[0], 3000-self.r)
+            else:
+                self.__objectif = (coord[0], coord[1])
 
 
 
