@@ -8,7 +8,7 @@ Created on Wed Feb 24 18:22:06 2016
 import numpy as np
 from math import round, sqrt,cos,sin
 
-def limite(coord):
+def limite(self, coord):
     if coord[0]-self.r<=0: # si on est le long de la paroi gauche
             if coord[1]-self.r<=0: # si on est le long de la paroi basse
                 return (self.r,self.r)
@@ -46,10 +46,7 @@ class Ramasse():
 
     @objectif.setter
     def objectif(self,coord):
-        self.__objectif = limite(coord)
-
-
-
+        self.__objectif = limite(self, coord)
 
 
     def update(self):
@@ -58,13 +55,20 @@ class Ramasse():
 
     def strategie(self):
         score_max=0
-        R=100
+        R=self.r
         for alpha in range(360):
             coord=R*cos(alpha),R*sin(alpha)
-            point=limite(coord)
+            point=limite(self, coord)
             score=0
             for obst in self.obst:
-                d=sqrt
+                d_obst=sqrt((obst[0]-point[0])**2 + (obst[1]-point[1])**2)
+                score -= 1/d_obst
+
+
+
+
+
+            if score > score_max: score_max = score
 
 
 
