@@ -18,9 +18,12 @@ LIDAR_DEVICE            = '/dev/ttyACM0'
 class Map(Thread):
 
     MAP_SIZE_PIXELS         = 500
-    MAP_SIZE_METERS         = 10
+    MAP_SIZE_METERS         = 3
     LIDAR_DEVICE            = '/dev/ttyACM0'
     THRESH_DETECTION = 100
+
+    RAW_ANGLE = -np.pi/4
+    LIDAR_POS = np.array([140,140])
 
     state = True
 
@@ -38,9 +41,18 @@ class Map(Thread):
             self.slam.update(self.lidar.getScan())
 
             # Get current robot position
-            x, y, theta = self.slam.getpos()
+            y, x, theta = self.slam.getpos()
 
-            self.bot_pos.append((x, y))
+            x-=5000
+            y-=5000
+            y-=198
+
+            angle = self.RAW_ANGLE + theta*3.1415/180
+            R = np.array([[np.cos(angle), -np.sin(angle)],[np.sin(angle), np.cos(angle)]])
+            pos = R.dot(np.array([x,y]))
+            print(pos)
+
+            self.bot_pos.append(pos)
             self.bot_ori.append(theta)
 
     def stop(self):
