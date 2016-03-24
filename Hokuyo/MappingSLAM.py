@@ -27,33 +27,39 @@ class Map(Thread):
 
     state = True
 
-    def __init__(self):
+    def __init__(self, rob_start = np.array([1000, 200])):
         Thread.__init__(self)
         self.lidar = Lidar(LIDAR_DEVICE)
         self.slam = RMHC_SLAM(LaserModel(), MAP_SIZE_PIXELS, MAP_SIZE_METERS)
         self.N = 0
         self.bot_pos = []
         self.bot_ori = []
+        self.ROB_START = rob_start
 
     def run(self):
+        # Constant
+        R = np.array([[np.cos(self.RAW_ANGLE), -np.sin(self.RAW_ANGLE)],
+                      [np.sin(self.RAW_ANGLE), np.cos(self.RAW_ANGLE)]])
+        lidar_dist = np.linalg.norm(self.LIDAR_POS)
         while(self.state):
             # Update SLAM with current Lidar scan
-            self.slam.update(self.lidar.getScan())
+            scan = self.lidar.getScan()
+            self.slam.update(scan)
 
             # Get current robot position
             y, x, theta = self.slam.getpos()
 
             x-=5000
             y-=5000
-            y-=198
+            pos = np.array([x, y])  # Position of lidar in the coordinate system from lidar
+            pos = R.dot(pos)  # Orientation corrected
+            pos = pos + self.ROB_START + self.LIDAR_POS  # Position of lidar in the coordinate system from map
 
-            angle = self.RAW_ANGLE + theta*3.1415/180
-            R = np.array([[np.cos(angle), -np.sin(angle)],[np.sin(angle), np.cos(angle)]])
-            pos = R.dot(np.array([x,y]))
-            print(pos)
+            angle = self.RAW_ANGLE + theta*np.pi/180.0
+            pos = pos - lidar_dist*np.array([np.cos(angle), np.sin(angle)])
 
             self.bot_pos.append(pos)
-            self.bot_ori.append(theta)
+            self.bot_ori.append(theta*np.pi/180.0)
 
     def stop(self):
         self.state = False
