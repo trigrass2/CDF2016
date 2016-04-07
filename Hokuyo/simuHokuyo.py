@@ -1,8 +1,8 @@
 import numpy as np
 
-N = 240
-minTheta = -3*np.pi/4
-maxTheta = 3*np.pi/4
+N = 682
+minTheta = -120*np.pi/180
+maxTheta = 120*np.pi/180
 
 def setN(size):
     N = size
@@ -35,10 +35,9 @@ def getHokuyoData(botPos, botAngle, obstacles, error):
     # Initialize variable
     cum_error = error
     theta = minTheta
-    dtheta = (maxTheta-minTheta)/N
-
+    dtheta = (maxTheta-minTheta)/(N-1)
     result = np.array([[1000.0],[0]])
-    while theta < maxTheta:
+    for i in range(0, N):
         D = 5000
         if((theta+botAngle)%np.pi == 0):
             for obstacle in obstacles:
@@ -55,7 +54,7 @@ def getHokuyoData(botPos, botAngle, obstacles, error):
             a = np.sin(theta + botAngle + np.pi/2)/np.cos(theta + botAngle + np.pi/2)
             b = botPos[1] - a*botPos[0]
             for obstacle in obstacles:
-                for i in range(len(obstacle)):
+                for i in range(0, len(obstacle[0])):
                     dA = obstacle[0,i-1]*a+b-obstacle[1,i-1]
                     dB = obstacle[0,i]*a+b-obstacle[1,i]
                     d = np.linalg.norm(obstacle[:,i] - obstacle[:,i-1])
@@ -87,13 +86,14 @@ def getHokuyoData(botPos, botAngle, obstacles, error):
     return result
 
 
-from Hokuyo.Tools import polar2cartesian
+from Tools import polar2cartesian
 import matplotlib.pyplot as plt
 if __name__ == "__main__":
 
-    fig = plt.figure(0)
+    fig = plt.figure(1)
     plt.ion()
     plt.show()
+    print("Ploting...")
 
     balise = np.array([[-40, 40, 40, -40], [-40, -40, 40, 40]])
     beacon = [np.array([[0], [0]])+balise, np.array([[2000], [0   ]])+balise, np.array([[2000], [3000]])+balise, np.array([[0   ], [3000]])+balise]
@@ -107,7 +107,7 @@ if __name__ == "__main__":
         x = int(var[0])
         y = int(var[1])
         o = int(var[2])
-        data = getHokuyoData([x, y], o/180.0*np.pi, beacon, 0)
+        data = getHokuyoData([x, y], o/180.0*np.pi, [np.array([[0, 2000, 2000, 0],[0, 0, 3000, 3000]])], 0)
         print(data)
         R = polar2cartesian(data)
 
@@ -115,5 +115,6 @@ if __name__ == "__main__":
         plt.clf()
         plt.axis([-3000, 3000, -3000, 3000])
         plt.scatter(R[0], R[1])
+        #plt.scatter(data[0], data[1])
         plt.scatter([0], [0], c='red')
         plt.draw()
