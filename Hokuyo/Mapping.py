@@ -183,8 +183,6 @@ class Obstacle():
         self.pointList.append(item)
 
     def reduce(self):
-        # En gros, calcul du barycentre, et definition du type en fonction du rapport (distmin/distmax)
-        # distX = distX au barycentre
         self.pointList = np.array([[self.pointList[k][0] for k in range(len(self.pointList))],
                                    [self.pointList[k][1] for k in range(len(self.pointList))]])
         self.center = self.pointList.mean(1)
