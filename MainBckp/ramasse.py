@@ -6,9 +6,11 @@ Created on Wed Feb 24 18:22:06 2016
 """
 
 import numpy as np
-from math import round, sqrt,cos,sin
+from math import sqrt,cos,sin
 
 def limite(r, coord):
+    if coord is None:
+        return None
     if coord[0]-r<=0: # si on est le long de la paroi gauche
         if coord[1]-r<=0: # si on est le long de la paroi basse
             return (r,r)
@@ -34,11 +36,11 @@ def limite(r, coord):
 
 class Ramasse():
     def __init__(self):
+        self.r = (290*sqrt(2)/2)+5
         self.position = None
         self.objectif = None
         self.cibles = None
         self.obstacles = None
-        self.r = (290*sqrt(2)/2)+5
         self.murs = [(0,800), (100, 800), (200,800)] + [(0, 2200), (100, 2200), (200, 2200)] + \
                 [(750,i) for i in range(900,2101,100)] + [(i, 1500) for i in range(750, 1351,100)]
 
@@ -58,10 +60,10 @@ class Ramasse():
         self.cibles = mapping.position_cibles
 
     def strategie(self):
-        score_max=0
+        score_max=-np.inf
         R=self.r
         for alpha in range(360):
-            coord=R*cos(alpha),R*sin(alpha)
+            coord=(R*cos(alpha) + self.position[0],R*sin(alpha) + self.position[1])
             point=limite(self.r, coord)
             score=0
             for obst in self.obstacles:
