@@ -10,26 +10,26 @@ from math import round, sqrt,cos,sin
 
 def limite(r, coord):
     if coord[0]-r<=0: # si on est le long de la paroi gauche
-            if coord[1]-r<=0: # si on est le long de la paroi basse
-                return (r,r)
-            elif coord[1]+r>=3000: # si on est le long de la paroi haute
-                return (r, 3000-r)
-            else:
-                return (r, coord[1])
-        elif coord[0]+r>=2000: # si on est le long de la paroi droite
-            if coord[1]-r<=0: # si on est le long de la paroi basse
-                return  (2000-r,r)
-            elif coord[1]+r>=3000: # si on est le long de la paroi haute
-                return (2000-r, 3000-r)
-            else:
-                return (2000-r, coord[1])
+        if coord[1]-r<=0: # si on est le long de la paroi basse
+            return (r,r)
+        elif coord[1]+r>=3000: # si on est le long de la paroi haute
+            return (r, 3000-r)
         else:
-            if coord[1]-r<=0: # si on est le long de la paroi basse
-                return (coord[0],r)
-            elif coord[1]+r>=3000: # si on est le long de la paroi haute
-                return (coord[0], 3000-r)
-            else:
-                return (coord[0], coord[1])
+            return (r, coord[1])
+    elif coord[0]+r>=2000: # si on est le long de la paroi droite
+        if coord[1]-r<=0: # si on est le long de la paroi basse
+            return  (2000-r,r)
+        elif coord[1]+r>=3000: # si on est le long de la paroi haute
+            return (2000-r, 3000-r)
+        else:
+            return (2000-r, coord[1])
+    else:
+        if coord[1]-r<=0: # si on est le long de la paroi basse
+            return (coord[0],r)
+        elif coord[1]+r>=3000: # si on est le long de la paroi haute
+            return (coord[0], 3000-r)
+        else:
+            return (coord[0], coord[1])
 
 
 class Ramasse():
