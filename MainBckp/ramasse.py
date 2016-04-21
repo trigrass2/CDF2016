@@ -6,7 +6,7 @@ Created on Wed Feb 24 18:22:06 2016
 """
 
 import numpy as np
-from math import sqrt,cos,sin
+from math import sqrt,cos,sin, exp
 
 def limite(r, coord):
     if coord is None:
@@ -33,6 +33,10 @@ def limite(r, coord):
         else:
             return (coord[0], coord[1])
 
+     # if coord[0] - r <= 200:
+     #     if coord[1] # il faut avoir ramasse.position
+     #     return (coord[0]
+
 
 class Ramasse():
     def __init__(self):
@@ -41,8 +45,8 @@ class Ramasse():
         self.objectif = None
         self.cibles = None
         self.obstacles = None
-        self.murs = [(0,800), (100, 800), (200,800)] + [(0, 2200), (100, 2200), (200, 2200)] + \
-                [(750,i) for i in range(900,2101,100)] + [(i, 1500) for i in range(750, 1351,100)]
+        self.murs = [(i,800) for i in range(0,201,20)] + [(i, 2200) for i in range(0,201,20)] + \
+                [(750,i) for i in range(900,2101,20)] + [(i, 1500) for i in range(750, 1351,20)]
 
 
     @property
@@ -60,21 +64,29 @@ class Ramasse():
         self.cibles = mapping.position_cibles
 
     def strategie(self):
+        dist = np.inf
+        for c in self.cibles:
+            d_cible=sqrt((c[0]-self.position[0])**2 + (c[1]-self.position[1])**2)
+            if d_cible<dist:
+                dist=d_cible
+                obj=c
+
         score_max=-np.inf
         R=self.r
-        for alpha in range(360):
+        for alpha in range(0,360,5):
             coord=(R*cos(alpha) + self.position[0],R*sin(alpha) + self.position[1])
             point=limite(self.r, coord)
             score=0
             for obst in self.obstacles:
                 d_obst=sqrt((obst[0]-point[0])**2 + (obst[1]-point[1])**2)
-                score -= 1/d_obst
-            for obj in self.cibles:
-                d_cibles = sqrt((obj[0]-point[0])**2 + (obj[1]-point[1])**2)
-                score += 1/d_cibles
+                score -= 1/(d_obst**1)
+            d_cible = sqrt((obj[0]-point[0])**2 + (obj[1]-point[1])**2)
+            score += d_cible**(-1)
+                # if obj == (1000,2500):
+                #     score += 1/d_cibles * 5
             for m in self.murs:
                 d_murs = sqrt((m[0]-point[0])**2 + (m[1]-point[1])**2)
-                score -= 1/d_murs
+                score -= d_murs**-2 # * 1/len(self.murs)
 
             if score > score_max:
                 score_max = score
