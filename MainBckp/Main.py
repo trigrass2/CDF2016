@@ -25,7 +25,10 @@ if __name__ == "__main__":
 
         Ramasse.update()
 
-        Ramasse.strategie() #TODO
+        if distance(self.position, self.liste_cibles[i]) < 50
+            self.indice_cible += 1
+            self.cible = self.liste_cibles[self.indice_cible]
+        Ramasse.avance()
 
         t = time.time()
 

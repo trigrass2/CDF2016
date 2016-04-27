@@ -36,14 +36,18 @@ def limite(r, coord):
      # if coord[0] - r <= 200:
      #     if coord[1] # il faut avoir ramasse.position
      #     return (coord[0]
-
+def distance(a,b):
+    return sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
 
 class Ramasse():
     def __init__(self):
-        self.r = (290*sqrt(2)/2)+5
+        self.r = 290*sqrt(2)/2
         self.position = None
         self.objectif = None
-        self.cibles = None
+        self.cible = (900,650)
+        self.liste_cibles = [(900,650), (900,1250), (1985,510), (1985,495)]
+        self.indice_cible = 0
+        self.liste_choses_a_faire = [pass, (lambda : recule(350)), [(lambda : oriente(0)), deploie_bras, aimante], releve_bras, [deploie_bras, desaimante, releve_bras]]
         self.obstacles = None
         self.murs = [(i,800) for i in range(0,201,20)] + [(i, 2200) for i in range(0,201,20)] + \
                 [(750,i) for i in range(900,2101,20)] + [(i, 1500) for i in range(750, 1351,20)]
@@ -61,15 +65,17 @@ class Ramasse():
     def update(self):
         self.position = mapping.position_Ramasse
         self.obstacles = mapping.position_obst
-        self.cibles = mapping.position_cibles
+        if distance(self.position, self.cible) < 100
+            self.indice_cible += 1
+            self.cible = self.liste_cibles[self.indice_cible]
 
     def strategie(self):
-        dist = np.inf
-        for c in self.cibles:
-            d_cible=sqrt((c[0]-self.position[0])**2 + (c[1]-self.position[1])**2)
-            if d_cible<dist:
-                dist=d_cible
-                obj=c
+        #dist = np.inf
+        # for c in self.cible:
+        #     d_cible=sqrt((c[0]-self.position[0])**2 + (c[1]-self.position[1])**2)
+        #     if d_cible<dist:
+        #         dist=d_cible
+        #         obj=c
 
         score_max=-np.inf
         R=self.r
@@ -78,14 +84,14 @@ class Ramasse():
             point=limite(self.r, coord)
             score=0
             for obst in self.obstacles:
-                d_obst=sqrt((obst[0]-point[0])**2 + (obst[1]-point[1])**2)
+                d_obst=distance(obst,point)
                 score -= 1/(d_obst**1)
-            d_cible = sqrt((obj[0]-point[0])**2 + (obj[1]-point[1])**2)
+            d_cible = distance(self.cible, point)
             score += d_cible**(-1)
                 # if obj == (1000,2500):
                 #     score += 1/d_cibles * 5
             for m in self.murs:
-                d_murs = sqrt((m[0]-point[0])**2 + (m[1]-point[1])**2)
+                d_murs = distance(m,point)
                 score -= d_murs**-2 # * 1/len(self.murs)
 
             if score > score_max:
