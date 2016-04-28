@@ -5,11 +5,13 @@ Created on Wed Feb 10 18:45:24 2016
 @author: Joris
 """
 
-import Ramasse #YEAH
+from ramasse import Ramasse, distance #YEAH
+import time
 
 if __name__ == "__main__":
 
-    import time
+    ramasse = Ramasse("poissons droite")
+
     deb = time.time()
     fin = deb + 90
 
@@ -23,14 +25,29 @@ if __name__ == "__main__":
         mapping.obstacles donne la liste des centres des robots.
         """
 
-        Ramasse.update()
+        ramasse.update()
 
-        if distance(self.position, self.liste_cibles[i]) < 50
-            self.indice_cible += 1
-            self.cible = self.liste_cibles[self.indice_cible]
-        Ramasse.avance()
+        for ennemi in ramasse.obstacles: #Evitement de robots.
+            if distance(ennemi, ramasse.position) <= 600: #Si un robot adverse est à moins de 60 cm, on s'arrête et on attend.
+                ramasse.stop_tout()
+                while distance(ennemi, ramasse.position) <= 600 :
+                    ramasse.update()
+                    if time.time() >= fin - 0.1 :
+                        break
+
+        if distance(ramasse.position, ramasse.liste_cibles[i]) < 20:
+            for action in ramasse.liste_choses_a_faire :
+                if time.time() >= fin - 0.1:
+                    break
+                action()
+            ramasse.indice_cible += 1
+            if ramasse.indice_cible >= len(ramasse.liste_cibles):
+                ramasse.indice_cible = 3
+
+        if time.time() < fin - 0.1 :
+            ramasse.avance(ramasse.liste_cibles[ramasse.indice_cible])
 
         t = time.time()
 
-    Ramasse.stop_tout()
-    Ramasse.deploie_parasol()
+    ramasse.stop_tout()
+    ramasse.deploie_parasol()
