@@ -39,7 +39,7 @@ def attend_depart():
 
 def maintient_cap(cap):
     if abs(theta-cap) > tolerance_cap:
-        ser_arduino.write(str(kp * (theta-cap))) #Poisitif : Positif moteur G, négatif moteur D
+        ser_arduino.write(str(kp * (theta-cap))) #Positif : Positif moteur G, négatif moteur D
 
 def temps_fini(t) :
     if t >= end :
