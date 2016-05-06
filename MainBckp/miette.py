@@ -3,7 +3,7 @@
 import serial
 import time
 
-ser_arduino = serial.Serial(port = "COM7", baudrate = 9600, timeout=0) #Port à vérifier
+ser_arduino = serial.Serial(port = "/tty", baudrate = 9600, timeout=0) #Port à vérifier
 if input == 'exit':
     ser_arduino.close()
 
