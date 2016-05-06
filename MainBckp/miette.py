@@ -34,8 +34,10 @@ def acquiert_from_arduino():
 def attend_depart():
 
     l = acquiert_from_arduino()
-    while l != "g":
+    while l != "g" or l != "v":
         l = acquiert_from_arduino()
+
+    return l
 
 def maintient_cap(cap):
     if abs(theta-cap) > tolerance_cap:
@@ -48,24 +50,42 @@ def temps_fini(t) :
     else: return False
 
 def main():
-    attend_depart()
+    cote = attend_depart()
     start = time.time()
     end = start + 90
     global end
 
-
-    cap = 100
+    if cote == 'v':
+        cap = 100
+    else :
+        cap = 260
     ser_arduino.write('z') #Avance
-    while y < 300 - distance_arret:
-        maintient_cap(cap)
-        if temps_fini(time.time()):
-            return
+
+    if cote == 'v':
+        while y < 300 - distance_arret:
+            maintient_cap(cap)
+            if temps_fini(time.time()):
+                return
+    else:
+        while y > 2700 + distance_arret:
+            maintient_cap(cap)
+            if temps_fini(time.time()):
+                return
 
     ser_arduino.write('s') #Arrete tout
-    ser_arduino.write('q') #Tourne à gauche (sur soi-même)
-    while theta < 180 - tolerance_cap:
-        if temps_fini(time.time()):
-            return
+    if cote == 'v':
+        ser_arduino.write('q') #Tourne à gauche (sur soi-même)
+    else:
+        ser_arduino.write('d') #Tourne à droite (sur soi-même)
+
+    if cote == 'v':
+        while theta < 180 - tolerance_cap:
+            if temps_fini(time.time()):
+                return
+    else:
+        while theta > 180 + tolerance_cap:
+            if temps_fini(time.time()):
+                return
 
     ser_arduino.write('s') #Arrete tout
 
@@ -82,35 +102,51 @@ def main():
             return
 
     ser_arduino.write('s') #Arrete tout
-    while theta > 90 - tolerance_cap:
+    if cote == 'v':
         ser_arduino.write('d') #Tourne à droite (sur soi-même)
-        if temps_fini(time.time()):
-            return
+        while theta > 90 + tolerance_cap:
+            if temps_fini(time.time()):
+                return
+    else :
+        ser_arduino.write('d') #Tourne à droite (sur soi-même)
+        while theta < 270 - tolerance_cap:
+            if temps_fini(time.time()):
+                return
+
+    ser_arduino.write('s') #Arrete tout
+    ser_arduino.write('z') #Avance
+
+    if cote == 'v':
+        cap = 90
+        while y < 610 - distance_arret:
+            maintient_cap(cap)
+            if temps_fini(time.time()):
+                return
+    else :
+        cap = 270
+        while y > 2390 + distance_arret:
+            maintient_cap(cap)
+            if temps_fini(time.time()):
+                return
+
 
     ser_arduino.write('s') #Arrete tout
 
-    cap = 90
-    while y < 610 - distance_arret:
-        maintient_cap(cap)
-        if temps_fini(time.time()):
-            return
-
-    ser_arduino.write('s') #Arrete tout
-
-    while theta > 0:
-        ser_arduino.write('d')#Tourne à droite (sur soi-même)
-        if temps_fini(time.time()):
-            return
-
-    ser_arduino.write('s') #Arrete tout
-
-    cap = 0
-    ser_arduino.write('r') #Recule
-    t1 = time.time()
-    while time.time() < t1 + 2 :
-        maintient_cap(cap)
-        if temps_fini(time.time()):
-            return
+    """partie commentée car contient une marche arrière, de toute façon ne sert qu'à retourner dans la 2ème porte."""
+    # while theta > 0:
+    #     ser_arduino.write('d')#Tourne à droite (sur soi-même)
+    #     if temps_fini(time.time()):
+    #         return
+    #
+    # ser_arduino.write('s') #Arrete tout
+    #
+    # cap = 0
+    # ser_arduino.write('r') #Recule
+    # t1 = time.time()
+    # while time.time() < t1 + 2 :
+    #     maintient_cap(cap)
+    #     if temps_fini(time.time()):
+    #         return
 
     ser_arduino.write('s')#Arrete tout
 
